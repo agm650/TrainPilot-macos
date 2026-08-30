@@ -1,0 +1,38 @@
+{
+  "name": "TrainPilot macOS MVP",
+  "version": "0.1.0",
+  "deployment_target": "macOS 12.0",
+  "swift_files": [
+    "TrainPilot/App/AppModel.swift",
+    "TrainPilot/App/TrainPilotApp.swift",
+    "TrainPilot/App/WindowCoordinator.swift",
+    "TrainPilot/Cab/Components/DirectionSelector.swift",
+    "TrainPilot/Cab/Components/FunctionPanel.swift",
+    "TrainPilot/Cab/Components/SpeedGauge.swift",
+    "TrainPilot/Cab/Components/StatusPill.swift",
+    "TrainPilot/Cab/Components/ThrottleWheel.swift",
+    "TrainPilot/Cab/Themes/SNCFClassicCabView.swift",
+    "TrainPilot/Cab/Themes/SNCFPalette.swift",
+    "TrainPilot/Core/Authentication/KeychainStore.swift",
+    "TrainPilot/Core/Models/Models.swift",
+    "TrainPilot/Core/Networking/APIClient.swift",
+    "TrainPilot/Core/Networking/EventClient.swift",
+    "TrainPilot/Core/Networking/SequenceTracker.swift",
+    "TrainPilot/Core/Preferences/AppPreferences.swift",
+    "TrainPilot/Driving/DrivingSession.swift",
+    "TrainPilot/Driving/DrivingSessionManager.swift",
+    "TrainPilot/Driving/KeyboardController.swift",
+    "TrainPilot/Features/Library/LibraryView.swift",
+    "TrainPilot/Features/Login/LoginView.swift",
+    "TrainPilot/Features/Preferences/PreferencesView.swift",
+    "TrainPilotTests/SemanticVersionTests.swift",
+    "TrainPilotTests/SequenceTrackerTests.swift",
+    "TrainPilotTests/ThrottleWheelMathTests.swift"
+  ],
+  "validation": {
+    "plist": "ok",
+    "xcode_source_references": "ok",
+    "swift_parse": "validated separately with swiftc -frontend -parse",
+    "core_typecheck": "Models.swift + SequenceTracker.swift validated on Swift 6.2/Linux"
+  }
+}

@@ -1,0 +1,28 @@
+.DS_Store
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.build/
+TrainPilot.xcodeproj/project.xcworkspace/xcuserdata
+# Xcode user-specific data
+xcuserdata/
+*.xcuserstate
+# Xcode build products
+DerivedData/
+build/
+
+# Xcode local workspace state
+*.xcworkspace/xcuserdata/
+
+# Swift Package Manager local/build data
+.build/
+.swiftpm/
+
+# Xcode generated user schemes
+*.xcscheme.user
+
+# Xcode debugger user data
+xcdebugger/
+
+# Archives
+*.xcarchive
