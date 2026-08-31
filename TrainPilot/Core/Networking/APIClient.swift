@@ -27,7 +27,7 @@ enum APIError: LocalizedError {
 }
 
 actor APIClient {
-    static let clientAPIVersion = "1.2.0"
+    static let clientAPIVersion = "1.4.0"
 
     private var baseURL: URL
     private var tokens: TokenPair?
@@ -37,6 +37,10 @@ actor APIClient {
     init(baseURL: URL, keychain: KeychainStore) {
         self.baseURL = baseURL
         self.keychain = keychain
+    }
+
+    func setBaseURL(_ url: URL) {
+        baseURL = url
     }
 
     func systemInfo() async throws -> SystemInfo {
@@ -58,19 +62,25 @@ actor APIClient {
 
         if minimum > client {
             throw APIError.incompatibleServer(
-                "Le serveur exige au minimum l'API \(info.minimumClientApiVersion), " +
-                "mais ce client implémente \(Self.clientAPIVersion)."
+                "Le serveur exige au minimum l'API " +
+                "\(info.minimumClientApiVersion), mais ce client " +
+                "implémente \(Self.clientAPIVersion)."
             )
         }
 
         if client.major != server.major {
             throw APIError.incompatibleServer(
-                "Version majeure d'API incompatible : client \(Self.clientAPIVersion), serveur \(info.apiVersion)."
+                "Version majeure d'API incompatible : client " +
+                "\(Self.clientAPIVersion), serveur \(info.apiVersion)."
             )
         }
     }
 
-    func login(username: String, password: String, clientID: String) async throws -> TokenPair {
+    func login(
+        username: String,
+        password: String,
+        clientID: String
+    ) async throws -> TokenPair {
         let body = LoginRequest(
             username: username,
             password: password,
@@ -87,6 +97,7 @@ actor APIClient {
             expected: [200],
             as: TokenPair.self
         )
+
         try save(pair)
         return pair
     }
@@ -103,9 +114,11 @@ actor APIClient {
 
     func accessTokenForWebSocket() async throws -> String {
         try await ensureFreshAccessToken()
+
         guard let accessToken = tokens?.accessToken else {
             throw APIError.notAuthenticated
         }
+
         return accessToken
     }
 
@@ -116,7 +129,64 @@ actor APIClient {
             expected: [200],
             as: ItemsResponse<Locomotive>.self
         )
+
         return response.items
+    }
+
+    func createLocomotive(
+        _ input: LocomotiveInput
+    ) async throws -> Locomotive {
+        try await request(
+            path: "/api/v1/locomotives",
+            method: "POST",
+            body: input,
+            expected: [201],
+            as: Locomotive.self
+        )
+    }
+
+    func updateLocomotive(
+        id: String,
+        input: LocomotiveInput
+    ) async throws -> Locomotive {
+        try await request(
+            path: "/api/v1/locomotives/\(urlComponent(id))",
+            method: "PUT",
+            body: input,
+            expected: [200],
+            as: Locomotive.self
+        )
+    }
+
+    func deleteLocomotive(id: String) async throws {
+        try await requestNoContent(
+            path: "/api/v1/locomotives/\(urlComponent(id))",
+            method: "DELETE",
+            expected: [204]
+        )
+    }
+
+    func exportRollingStock() async throws -> RollingStockExport {
+        let (data, response) = try await performWithResponse(
+            path: "/api/v1/exports/rolling-stock",
+            method: "GET",
+            bodyData: nil,
+            authorized: true,
+            expected: [200],
+            allowRefresh: true,
+            accept: "application/vnd.dcc-control.package+zip"
+        )
+
+        let filename = suggestedFilename(
+            from: response.value(
+                forHTTPHeaderField: "Content-Disposition"
+            )
+        ) ?? "TrainPilot-rolling-stock.zip"
+
+        return RollingStockExport(
+            data: data,
+            suggestedFilename: filename
+        )
     }
 
     func stationStatus() async throws -> StationStatus {
@@ -130,7 +200,8 @@ actor APIClient {
 
     func acquire(locomotiveID: String) async throws -> ControlLease {
         try await request(
-            path: "/api/v1/locomotives/\(urlComponent(locomotiveID))/control-lease",
+            path: "/api/v1/locomotives/" +
+                "\(urlComponent(locomotiveID))/control-lease",
             method: "POST",
             expected: [201],
             as: ControlLease.self
@@ -139,7 +210,8 @@ actor APIClient {
 
     func heartbeat(leaseID: String) async throws -> ControlLease {
         try await request(
-            path: "/api/v1/control-leases/\(urlComponent(leaseID))/heartbeat",
+            path: "/api/v1/control-leases/" +
+                "\(urlComponent(leaseID))/heartbeat",
             method: "PUT",
             expected: [200],
             as: ControlLease.self
@@ -161,9 +233,14 @@ actor APIClient {
         direction: DCCDirection
     ) async throws {
         try await requestNoContent(
-            path: "/api/v1/locomotives/\(urlComponent(locomotiveID))/throttle",
+            path: "/api/v1/locomotives/" +
+                "\(urlComponent(locomotiveID))/throttle",
             method: "PUT",
-            body: ThrottleCommand(leaseId: leaseID, speed: speed, direction: direction),
+            body: ThrottleCommand(
+                leaseId: leaseID,
+                speed: speed,
+                direction: direction
+            ),
             expected: [204]
         )
     }
@@ -175,9 +252,14 @@ actor APIClient {
         enabled: Bool
     ) async throws {
         try await requestNoContent(
-            path: "/api/v1/locomotives/\(urlComponent(locomotiveID))/functions/\(functionNumber)",
+            path: "/api/v1/locomotives/" +
+                "\(urlComponent(locomotiveID))/functions/" +
+                "\(functionNumber)",
             method: "PUT",
-            body: FunctionCommand(leaseId: leaseID, enabled: enabled),
+            body: FunctionCommand(
+                leaseId: leaseID,
+                enabled: enabled
+            ),
             expected: [204]
         )
     }
@@ -208,27 +290,37 @@ actor APIClient {
                 allowRefresh: false
             )
         }
+
         tokens = nil
         keychain.delete(account: refreshTokenAccount)
     }
 
+    // MARK: - Internal HTTP
+
     private func save(_ pair: TokenPair) throws {
         tokens = pair
-        try keychain.save(pair.refreshToken, account: refreshTokenAccount)
+        try keychain.save(
+            pair.refreshToken,
+            account: refreshTokenAccount
+        )
     }
 
     private func ensureFreshAccessToken() async throws {
         guard let tokens else {
             throw APIError.notAuthenticated
         }
+
         if tokens.accessExpiresAt.timeIntervalSinceNow > 30 {
             return
         }
+
         let pair = try await refresh(using: tokens.refreshToken)
         try save(pair)
     }
 
-    private func refresh(using refreshToken: String) async throws -> TokenPair {
+    private func refresh(
+        using refreshToken: String
+    ) async throws -> TokenPair {
         try await request(
             path: "/api/v1/auth/refresh",
             method: "POST",
@@ -269,6 +361,7 @@ actor APIClient {
         as type: T.Type
     ) async throws -> T {
         let data = try JSONEncoder().encode(body)
+
         return try await request(
             path: path,
             method: method,
@@ -297,6 +390,7 @@ actor APIClient {
             expected: expected,
             allowRefresh: allowRefresh
         )
+
         return try JSONDecoder.trainPilot.decode(T.self, from: data)
     }
 
@@ -341,61 +435,152 @@ actor APIClient {
         bodyData: Data?,
         authorized: Bool,
         expected: Set<Int>,
-        allowRefresh: Bool
+        allowRefresh: Bool,
+        accept: String = "application/json"
     ) async throws -> Data {
+        let (data, _) = try await performWithResponse(
+            path: path,
+            method: method,
+            bodyData: bodyData,
+            authorized: authorized,
+            expected: expected,
+            allowRefresh: allowRefresh,
+            accept: accept
+        )
+
+        return data
+    }
+
+    private func performWithResponse(
+        path: String,
+        method: String,
+        bodyData: Data?,
+        authorized: Bool,
+        expected: Set<Int>,
+        allowRefresh: Bool,
+        accept: String = "application/json"
+    ) async throws -> (Data, HTTPURLResponse) {
         if authorized {
             try await ensureFreshAccessToken()
         }
 
-        var request = try makeRequest(path: path, method: method, bodyData: bodyData)
-        if authorized, let accessToken = tokens?.accessToken {
-            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        var request = try makeRequest(
+            path: path,
+            method: method,
+            bodyData: bodyData,
+            accept: accept
+        )
+
+        if authorized,
+           let accessToken = tokens?.accessToken {
+            request.setValue(
+                "Bearer \(accessToken)",
+                forHTTPHeaderField: "Authorization"
+            )
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(
+            for: request
+        )
+
         guard let http = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
 
-        if http.statusCode == 401, authorized, allowRefresh, let refreshToken = tokens?.refreshToken {
+        if http.statusCode == 401,
+           authorized,
+           allowRefresh,
+           let refreshToken = tokens?.refreshToken {
             let pair = try await refresh(using: refreshToken)
             try save(pair)
-            return try await perform(
+
+            return try await performWithResponse(
                 path: path,
                 method: method,
                 bodyData: bodyData,
                 authorized: authorized,
                 expected: expected,
-                allowRefresh: false
+                allowRefresh: false,
+                accept: accept
             )
         }
 
         guard expected.contains(http.statusCode) else {
-            if let problem = try? JSONDecoder.trainPilot.decode(Problem.self, from: data) {
+            if let problem = try? JSONDecoder.trainPilot.decode(
+                Problem.self,
+                from: data
+            ) {
                 throw APIError.problem(problem)
             }
+
             throw APIError.httpStatus(http.statusCode)
         }
 
-        return data
+        return (data, http)
     }
 
-    private func makeRequest(path: String, method: String, bodyData: Data?) throws -> URLRequest {
-        guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
+    private func makeRequest(
+        path: String,
+        method: String,
+        bodyData: Data?,
+        accept: String
+    ) throws -> URLRequest {
+        guard let url = URL(
+            string: path,
+            relativeTo: baseURL
+        )?.absoluteURL else {
             throw APIError.invalidServerURL
         }
+
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 10
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(
+            accept,
+            forHTTPHeaderField: "Accept"
+        )
+
         if let bodyData {
             request.httpBody = bodyData
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(
+                "application/json",
+                forHTTPHeaderField: "Content-Type"
+            )
         }
+
         return request
     }
 
     private func urlComponent(_ value: String) -> String {
-        value.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? value
+        value.addingPercentEncoding(
+            withAllowedCharacters: .urlPathAllowed
+        ) ?? value
+    }
+
+    private func suggestedFilename(
+        from contentDisposition: String?
+    ) -> String? {
+        guard let contentDisposition else {
+            return nil
+        }
+
+        for component in contentDisposition.split(separator: ";") {
+            let part = component.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+            guard part.lowercased().hasPrefix("filename=") else {
+                continue
+            }
+
+            let value = String(part.dropFirst("filename=".count))
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+
+            if !value.isEmpty {
+                return value
+            }
+        }
+
+        return nil
     }
 }

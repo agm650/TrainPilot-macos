@@ -52,6 +52,10 @@ final class AppModel: ObservableObject {
         self.preferences = preferences
     }
 
+    var isAdministrator: Bool {
+        currentUser?.role == "administrator"
+    }
+
     func restoreSessionIfPossible() async {
         guard !restoreAttempted else { return }
         restoreAttempted = true
@@ -71,7 +75,9 @@ final class AppModel: ObservableObject {
             systemInfo = info
 
             connectionState = .authenticating
-            let pair = try await client.restore(refreshToken: refreshToken)
+            let pair = try await client.restore(
+                refreshToken: refreshToken
+            )
             currentSessionID = pair.sessionId
             currentUser = pair.user
 
@@ -145,23 +151,106 @@ final class AppModel: ObservableObject {
         isLoggingOut = false
     }
 
+    // MARK: - Rolling stock library
+
     func refreshLocomotives() async {
         guard let api else { return }
 
         do {
-            locomotives = try await api.listLocomotives()
+            let values = try await api.listLocomotives()
+            locomotives = sortedLocomotives(values)
         } catch {
             presentError(error)
         }
     }
 
+    func createLocomotive(
+        _ input: LocomotiveInput
+    ) async -> Locomotive? {
+        guard isAdministrator else {
+            errorMessage = "Cette opération nécessite le rôle administrateur."
+            return nil
+        }
+
+        guard let api else { return nil }
+
+        do {
+            let locomotive = try await api.createLocomotive(input)
+            upsertLocomotive(locomotive)
+            return locomotive
+        } catch {
+            presentError(error)
+            return nil
+        }
+    }
+
+    func updateLocomotive(
+        id: String,
+        input: LocomotiveInput
+    ) async -> Locomotive? {
+        guard isAdministrator else {
+            errorMessage = "Cette opération nécessite le rôle administrateur."
+            return nil
+        }
+
+        guard let api else { return nil }
+
+        do {
+            let locomotive = try await api.updateLocomotive(
+                id: id,
+                input: input
+            )
+            upsertLocomotive(locomotive)
+            return locomotive
+        } catch {
+            presentError(error)
+            return nil
+        }
+    }
+
+    func deleteLocomotive(id: String) async -> Bool {
+        guard isAdministrator else {
+            errorMessage = "Cette opération nécessite le rôle administrateur."
+            return false
+        }
+
+        guard let api else { return false }
+
+        do {
+            try await api.deleteLocomotive(id: id)
+            locomotives.removeAll { $0.id == id }
+            return true
+        } catch {
+            presentError(error)
+            return false
+        }
+    }
+
+    func exportRollingStock() async -> RollingStockExport? {
+        guard let api else { return nil }
+
+        do {
+            return try await api.exportRollingStock()
+        } catch {
+            presentError(error)
+            return nil
+        }
+    }
+
+    // MARK: - Driving
+
     func acquire(_ locomotive: Locomotive) async {
         guard let api else { return }
 
         do {
-            let lease = try await api.acquire(locomotiveID: locomotive.id)
+            let lease = try await api.acquire(
+                locomotiveID: locomotive.id
+            )
             upsertLease(lease)
-            _ = driving.add(locomotive: locomotive, lease: lease)
+            _ = driving.add(
+                locomotive: locomotive,
+                lease: lease
+            )
             startLeaseHeartbeat(for: locomotive.id)
         } catch {
             presentError(error)
@@ -169,7 +258,10 @@ final class AppModel: ObservableObject {
     }
 
     func release(locomotiveID: String) async {
-        guard let api, let session = driving.sessions[locomotiveID] else { return }
+        guard let api,
+              let session = driving.sessions[locomotiveID] else {
+            return
+        }
 
         do {
             session.requestedSpeed = 0
@@ -186,24 +278,25 @@ final class AppModel: ObservableObject {
         speed: Int,
         immediate: Bool = false
     ) {
-        guard let session = driving.sessions[locomotiveID] else { return }
+        guard let session = driving.sessions[locomotiveID] else {
+            return
+        }
 
         let clamped = min(max(speed, 0), 100)
 
-        if session.selectorPosition == .neutral, clamped > 0 {
+        if session.selectorPosition == .neutral,
+           clamped > 0 {
             return
         }
 
         session.requestedSpeed = clamped
-
-        // A new throttle request supersedes the previous pending/in-flight one.
-        // Cancellation is an expected part of throttle coalescing and must not
-        // be surfaced as an application error.
         throttleTasks[locomotiveID]?.cancel()
 
         if immediate || clamped == 0 {
             throttleTasks[locomotiveID] = Task { [weak self] in
-                await self?.sendThrottle(locomotiveID: locomotiveID)
+                await self?.sendThrottle(
+                    locomotiveID: locomotiveID
+                )
             }
             return
         }
@@ -222,7 +315,9 @@ final class AppModel: ObservableObject {
             }
 
             guard !Task.isCancelled else { return }
-            await self?.sendThrottle(locomotiveID: locomotiveID)
+            await self?.sendThrottle(
+                locomotiveID: locomotiveID
+            )
         }
     }
 
@@ -230,7 +325,9 @@ final class AppModel: ObservableObject {
         throttleTasks[locomotiveID]?.cancel()
 
         throttleTasks[locomotiveID] = Task { [weak self] in
-            await self?.sendThrottle(locomotiveID: locomotiveID)
+            await self?.sendThrottle(
+                locomotiveID: locomotiveID
+            )
         }
     }
 
@@ -238,7 +335,9 @@ final class AppModel: ObservableObject {
         locomotiveID: String,
         position: DirectionSelectorPosition
     ) async {
-        guard let session = driving.sessions[locomotiveID] else { return }
+        guard let session = driving.sessions[locomotiveID] else {
+            return
+        }
 
         switch position {
         case .neutral:
@@ -249,16 +348,16 @@ final class AppModel: ObservableObject {
 
         case .forward, .reverse:
             guard session.requestedSpeed == 0 else {
-                errorMessage = "Le changement de sens est autorisé uniquement à 0 %."
+                errorMessage =
+                    "Le changement de sens est autorisé uniquement à 0 %."
                 return
             }
 
-            session.direction = position == .forward ? .forward : .reverse
+            session.direction = position == .forward
+                ? .forward
+                : .reverse
             session.selectorPosition = position
-
             throttleTasks[locomotiveID]?.cancel()
-
-            // Send 0 % so the DCC direction is explicit without moving.
             await sendThrottle(locomotiveID: locomotiveID)
         }
     }
@@ -267,7 +366,10 @@ final class AppModel: ObservableObject {
         locomotiveID: String,
         functionNumber: Int
     ) async {
-        guard let api, let session = driving.sessions[locomotiveID] else { return }
+        guard let api,
+              let session = driving.sessions[locomotiveID] else {
+            return
+        }
 
         let previous = session.functionStates[functionNumber] ?? false
         let next = !previous
@@ -281,7 +383,10 @@ final class AppModel: ObservableObject {
                 enabled: next
             )
         } catch {
-            session.setFunction(functionNumber, enabled: previous)
+            session.setFunction(
+                functionNumber,
+                enabled: previous
+            )
             presentError(error)
         }
     }
@@ -311,9 +416,31 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func leaseForLocomotive(_ locomotiveID: String) -> ControlLease? {
+    func clearEmergencyStop() async {
+        guard stationStatus.connectivity == .online else {
+            errorMessage =
+                "Impossible de réarmer : la centrale est hors ligne."
+            return
+        }
+
+        guard let api else { return }
+
+        do {
+            // A successful explicit power-on clears the server-side
+            // emergency-stop interlock. The UI waits for the WebSocket
+            // track.emergency_stop(active:false) confirmation.
+            try await api.setTrackPower(true)
+        } catch {
+            presentError(error)
+        }
+    }
+
+    func leaseForLocomotive(
+        _ locomotiveID: String
+    ) -> ControlLease? {
         knownLeases.first {
-            $0.locomotiveId == locomotiveID && $0.state != "released"
+            $0.locomotiveId == locomotiveID &&
+            $0.state != "released"
         }
     }
 
@@ -321,12 +448,17 @@ final class AppModel: ObservableObject {
         lease.sessionId == currentSessionID
     }
 
+    // MARK: - Bootstrap / WebSocket
+
     private func bootstrap() async throws {
-        guard let api, let baseURL = normalizedServerURL() else {
+        guard let api,
+              let baseURL = normalizedServerURL() else {
             throw APIError.invalidServerURL
         }
 
-        locomotives = try await api.listLocomotives()
+        locomotives = sortedLocomotives(
+            try await api.listLocomotives()
+        )
         stationStatus = try await api.stationStatus()
         connectionState = .synchronizing
 
@@ -343,7 +475,9 @@ final class AppModel: ObservableObject {
         connectionState = .ready
     }
 
-    private func startConsuming(_ stream: AsyncStream<ServerMessage>) {
+    private func startConsuming(
+        _ stream: AsyncStream<ServerMessage>
+    ) {
         eventTask?.cancel()
 
         eventTask = Task { [weak self] in
@@ -363,7 +497,8 @@ final class AppModel: ObservableObject {
     }
 
     private func scheduleReconnect() async {
-        guard reconnectTask == nil || reconnectTask?.isCancelled == true else {
+        guard reconnectTask == nil ||
+                reconnectTask?.isCancelled == true else {
             return
         }
 
@@ -373,10 +508,13 @@ final class AppModel: ObservableObject {
             let delays: [UInt64] = [1, 2, 5, 10, 15]
             var attempt = 0
 
-            while !Task.isCancelled, !self.isLoggingOut {
+            while !Task.isCancelled,
+                  !self.isLoggingOut {
                 self.connectionState = .reconnecting
 
-                let seconds = delays[min(attempt, delays.count - 1)]
+                let seconds = delays[
+                    min(attempt, delays.count - 1)
+                ]
 
                 do {
                     try await Task.sleep(
@@ -396,7 +534,8 @@ final class AppModel: ObservableObject {
                         throw APIError.invalidServerURL
                     }
 
-                    let accessToken = try await api.accessTokenForWebSocket()
+                    let accessToken = try await api
+                        .accessTokenForWebSocket()
                     let eventClient = EventClient()
                     self.eventClient = eventClient
 
@@ -430,7 +569,7 @@ final class AppModel: ObservableObject {
             }
 
             if let locos = snapshot.payload.locomotives {
-                locomotives = locos
+                locomotives = sortedLocomotives(locos)
             }
 
             if let leases = snapshot.payload.leases {
@@ -457,7 +596,9 @@ final class AppModel: ObservableObject {
                 let payload = try event.decodePayload(
                     TrackPowerChangedPayload.self
                 )
-                stationStatus.trackPower = payload.enabled ? .on : .off
+                stationStatus.trackPower = payload.enabled
+                    ? .on
+                    : .off
 
             case "track.emergency_stop":
                 let payload = try event.decodePayload(
@@ -477,7 +618,9 @@ final class AppModel: ObservableObject {
                     LocomotiveSpeedChangedPayload.self
                 )
 
-                if let session = driving.sessions[payload.locomotiveId] {
+                if let session = driving.sessions[
+                    payload.locomotiveId
+                ] {
                     session.confirmedSpeed = payload.speed
                     session.direction = payload.direction
                 }
@@ -487,13 +630,16 @@ final class AppModel: ObservableObject {
                     LocomotiveFunctionChangedPayload.self
                 )
 
-                driving.sessions[payload.locomotiveId]?.setFunction(
-                    payload.function,
-                    enabled: payload.enabled
-                )
+                driving.sessions[payload.locomotiveId]?
+                    .setFunction(
+                        payload.function,
+                        enabled: payload.enabled
+                    )
 
             case "locomotive.control.acquired":
-                let lease = try event.decodePayload(ControlLease.self)
+                let lease = try event.decodePayload(
+                    ControlLease.self
+                )
                 upsertLease(lease)
 
                 if isOwnLease(lease),
@@ -509,12 +655,18 @@ final class AppModel: ObservableObject {
                 }
 
             case "locomotive.control.released":
-                let lease = try event.decodePayload(ControlLease.self)
+                let lease = try event.decodePayload(
+                    ControlLease.self
+                )
                 upsertLease(lease)
 
                 if isOwnLease(lease) {
-                    stopLeaseHeartbeat(for: lease.locomotiveId)
-                    driving.remove(locomotiveID: lease.locomotiveId)
+                    stopLeaseHeartbeat(
+                        for: lease.locomotiveId
+                    )
+                    driving.remove(
+                        locomotiveID: lease.locomotiveId
+                    )
                 }
 
             case "locomotive.control.expired":
@@ -522,8 +674,9 @@ final class AppModel: ObservableObject {
                     LeaseExpiredPayload.self
                 )
 
-                if let session = driving.sessions[payload.locomotiveId],
-                   session.lease.id == payload.leaseId {
+                if let session = driving.sessions[
+                    payload.locomotiveId
+                ], session.lease.id == payload.leaseId {
                     session.lease.state = "stopping"
                     session.requestedSpeed = 0
                     session.selectorPosition = .neutral
@@ -531,7 +684,8 @@ final class AppModel: ObservableObject {
 
             case "locomotive.created",
                  "locomotive.updated",
-                 "locomotive.deleted":
+                 "locomotive.deleted",
+                 "rolling-stock.imported":
                 await refreshLocomotives()
 
             default:
@@ -541,6 +695,8 @@ final class AppModel: ObservableObject {
             // Unknown/newer payloads must never break the WebSocket stream.
         }
     }
+
+    // MARK: - Command / lease keepalive
 
     private func sendThrottle(locomotiveID: String) async {
         guard let api,
@@ -561,9 +717,6 @@ final class AppModel: ObservableObject {
                 direction: session.direction
             )
         } catch {
-            // URLSession normally reports URLError.cancelled when a previous
-            // throttle task is superseded by a newer position of the wheel.
-            // This is expected control-flow, not an error to show to the driver.
             presentError(error)
         }
     }
@@ -575,7 +728,10 @@ final class AppModel: ObservableObject {
             return
         }
 
-        let interval = max(500, session.lease.heartbeatMillis / 2)
+        let interval = max(
+            500,
+            session.lease.heartbeatMillis / 2
+        )
 
         leaseHeartbeatTasks[locomotiveID] = Task { [weak self] in
             while !Task.isCancelled {
@@ -594,7 +750,9 @@ final class AppModel: ObservableObject {
                     return
                 }
 
-                await self.renewLease(locomotiveID: locomotiveID)
+                await self.renewLease(
+                    locomotiveID: locomotiveID
+                )
             }
         }
     }
@@ -617,13 +775,16 @@ final class AppModel: ObservableObject {
             }
 
             errorMessage =
-                "Lease \(session.locomotive.name) : \(error.localizedDescription)"
+                "Lease \(session.locomotive.name) : " +
+                error.localizedDescription
         }
     }
 
     private func stopLeaseHeartbeat(for locomotiveID: String) {
         leaseHeartbeatTasks[locomotiveID]?.cancel()
-        leaseHeartbeatTasks.removeValue(forKey: locomotiveID)
+        leaseHeartbeatTasks.removeValue(
+            forKey: locomotiveID
+        )
     }
 
     private func cancelAllLeaseHeartbeats() {
@@ -641,7 +802,9 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func restoreOwnSessions(from leases: [ControlLease]) {
+    private func restoreOwnSessions(
+        from leases: [ControlLease]
+    ) {
         guard currentSessionID != nil else { return }
 
         for lease in leases
@@ -662,6 +825,29 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // MARK: - Helpers
+
+    private func sortedLocomotives(
+        _ values: [Locomotive]
+    ) -> [Locomotive] {
+        values.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) ==
+                .orderedAscending
+        }
+    }
+
+    private func upsertLocomotive(_ locomotive: Locomotive) {
+        if let index = locomotives.firstIndex(where: {
+            $0.id == locomotive.id
+        }) {
+            locomotives[index] = locomotive
+        } else {
+            locomotives.append(locomotive)
+        }
+
+        locomotives = sortedLocomotives(locomotives)
+    }
+
     private func normalizedServerURL() -> URL? {
         var value = preferences.serverURL
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -672,7 +858,9 @@ final class AppModel: ObservableObject {
 
         guard let url = URL(string: value),
               let scheme = url.scheme,
-              ["http", "https"].contains(scheme.lowercased()),
+              ["http", "https"].contains(
+                  scheme.lowercased()
+              ),
               url.host != nil else {
             return nil
         }
@@ -691,6 +879,7 @@ final class AppModel: ObservableObject {
         }
 
         let nsError = error as NSError
+
         return nsError.domain == NSCocoaErrorDomain &&
             nsError.code == NSUserCancelledError
     }
@@ -721,26 +910,5 @@ final class AppModel: ObservableObject {
         currentSessionID = nil
 
         driving.removeAll()
-    }
-    
-    func clearEmergencyStop() async {
-        guard stationStatus.connectivity == .online else {
-            errorMessage = "Impossible de réarmer : la centrale est hors ligne."
-            return
-        }
-
-        guard let api else { return }
-
-        do {
-            // Le protocole TrainPilot définit un power-on explicite
-            // comme l'action de réarmement après un emergency stop.
-            try await api.setTrackPower(true)
-
-            // Ne pas modifier stationStatus.emergencyStop ici.
-            // On attend l'événement WebSocket track.emergency_stop(active: false)
-            // émis par le serveur.
-        } catch {
-            presentError(error)
-        }
     }
 }

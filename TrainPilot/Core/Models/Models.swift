@@ -63,6 +63,7 @@ struct Capabilities: Codable {
     let trackPower: Bool
     let locomotiveControl: Bool
     let functions: Int
+    let maxFunctionNumber: Int?
     let accessoryControl: Bool
     let feedback: Bool
 }
@@ -71,6 +72,8 @@ struct SystemInfo: Codable {
     let serverVersion: String
     let apiVersion: String
     let minimumClientApiVersion: String
+    let eventApiVersion: String?
+    let minimumClientEventApiVersion: String?
     let station: Capabilities
 }
 
@@ -124,9 +127,62 @@ struct Locomotive: Codable, Identifiable, Hashable {
     let model: String?
 
     var subtitle: String {
-        let parts = [manufacturer, model].compactMap { $0 }.filter { !$0.isEmpty }
-        return parts.isEmpty ? "DCC \(dccAddress)" : "\(parts.joined(separator: " ")) · DCC \(dccAddress)"
+        let parts = [manufacturer, model]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+
+        return parts.isEmpty
+            ? "DCC \(dccAddress)"
+            : "\(parts.joined(separator: " ")) · DCC \(dccAddress)"
     }
+}
+
+struct LocomotiveInput: Codable, Equatable {
+    let name: String
+    let dccAddress: Int
+    let addressKind: String
+    let speedSteps: Int
+    let manufacturer: String?
+    let model: String?
+
+    init(
+        name: String,
+        dccAddress: Int,
+        addressKind: String,
+        speedSteps: Int,
+        manufacturer: String?,
+        model: String?
+    ) {
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.dccAddress = dccAddress
+        self.addressKind = addressKind
+        self.speedSteps = speedSteps
+        self.manufacturer = Self.normalizedOptional(manufacturer)
+        self.model = Self.normalizedOptional(model)
+    }
+
+    init(locomotive: Locomotive) {
+        self.init(
+            name: locomotive.name,
+            dccAddress: locomotive.dccAddress,
+            addressKind: locomotive.addressKind,
+            speedSteps: locomotive.speedSteps,
+            manufacturer: locomotive.manufacturer,
+            model: locomotive.model
+        )
+    }
+
+    private static func normalizedOptional(_ value: String?) -> String? {
+        guard let value else { return nil }
+
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
+struct RollingStockExport {
+    let data: Data
+    let suggestedFilename: String
 }
 
 struct ControlLease: Codable, Identifiable {
@@ -247,28 +303,62 @@ struct SnapshotPayload: Decodable {
         var resolvedCapabilities: Capabilities?
         var resolvedStatus: StationStatus?
 
-        if let direct = try? container.decode(Capabilities.self, forKey: .station) {
+        if let direct = try? container.decode(
+            Capabilities.self,
+            forKey: .station
+        ) {
             resolvedCapabilities = direct
-        } else if let nested = try? container.decode(StationContainer.self, forKey: .station) {
+        } else if let nested = try? container.decode(
+            StationContainer.self,
+            forKey: .station
+        ) {
             resolvedCapabilities = nested.capabilities
             resolvedStatus = nested.status
         }
 
-        if let directStatus = try? container.decode(StationStatus.self, forKey: .stationStatus) {
+        if let directStatus = try? container.decode(
+            StationStatus.self,
+            forKey: .stationStatus
+        ) {
             resolvedStatus = directStatus
         }
 
         capabilities = resolvedCapabilities
         stationStatus = resolvedStatus
-        locomotives = SnapshotPayload.decodeArray(Locomotive.self, from: container, key: .locomotives)
-        blocks = SnapshotPayload.decodeArray(Block.self, from: container, key: .blocks)
-        turnouts = SnapshotPayload.decodeArray(Turnout.self, from: container, key: .turnouts)
-        routes = SnapshotPayload.decodeArray(Route.self, from: container, key: .routes)
 
-        if let directLeases = SnapshotPayload.decodeArray(ControlLease.self, from: container, key: .leases) {
+        locomotives = SnapshotPayload.decodeArray(
+            Locomotive.self,
+            from: container,
+            key: .locomotives
+        )
+        blocks = SnapshotPayload.decodeArray(
+            Block.self,
+            from: container,
+            key: .blocks
+        )
+        turnouts = SnapshotPayload.decodeArray(
+            Turnout.self,
+            from: container,
+            key: .turnouts
+        )
+        routes = SnapshotPayload.decodeArray(
+            Route.self,
+            from: container,
+            key: .routes
+        )
+
+        if let directLeases = SnapshotPayload.decodeArray(
+            ControlLease.self,
+            from: container,
+            key: .leases
+        ) {
             leases = directLeases
         } else {
-            leases = SnapshotPayload.decodeArray(ControlLease.self, from: container, key: .controlLeases)
+            leases = SnapshotPayload.decodeArray(
+                ControlLease.self,
+                from: container,
+                key: .controlLeases
+            )
         }
     }
 
@@ -280,9 +370,14 @@ struct SnapshotPayload: Decodable {
         if let direct = try? container.decode([T].self, forKey: key) {
             return direct
         }
-        if let wrapped = try? container.decode(ArrayContainer<T>.self, forKey: key) {
+
+        if let wrapped = try? container.decode(
+            ArrayContainer<T>.self,
+            forKey: key
+        ) {
             return wrapped.items
         }
+
         return nil
     }
 }
@@ -336,21 +431,29 @@ struct LeaseExpiredPayload: Decodable {
     let releaseAfter: Date?
 }
 
+// MARK: - Date decoding
+
 extension JSONDecoder {
     static var trainPilot: JSONDecoder {
         let decoder = JSONDecoder()
+
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let value = try container.decode(String.self)
 
             let fractional = ISO8601DateFormatter()
-            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            fractional.formatOptions = [
+                .withInternetDateTime,
+                .withFractionalSeconds
+            ]
+
             if let date = fractional.date(from: value) {
                 return date
             }
 
             let standard = ISO8601DateFormatter()
             standard.formatOptions = [.withInternetDateTime]
+
             if let date = standard.date(from: value) {
                 return date
             }
@@ -360,6 +463,7 @@ extension JSONDecoder {
                 debugDescription: "Invalid ISO-8601 date: \(value)"
             )
         }
+
         return decoder
     }
 }
@@ -370,21 +474,37 @@ struct SemanticVersion: Comparable {
     let patch: Int
 
     init?(_ string: String) {
-        let core = string.split(separator: "-", maxSplits: 1).first ?? Substring(string)
+        let core = string
+            .split(separator: "-", maxSplits: 1)
+            .first ?? Substring(string)
+
         let components = core.split(separator: ".")
+
         guard components.count >= 2,
               let major = Int(components[0]),
               let minor = Int(components[1]) else {
             return nil
         }
+
         self.major = major
         self.minor = minor
-        self.patch = components.count > 2 ? (Int(components[2]) ?? 0) : 0
+        self.patch = components.count > 2
+            ? (Int(components[2]) ?? 0)
+            : 0
     }
 
-    static func < (lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-        if lhs.major != rhs.major { return lhs.major < rhs.major }
-        if lhs.minor != rhs.minor { return lhs.minor < rhs.minor }
+    static func < (
+        lhs: SemanticVersion,
+        rhs: SemanticVersion
+    ) -> Bool {
+        if lhs.major != rhs.major {
+            return lhs.major < rhs.major
+        }
+
+        if lhs.minor != rhs.minor {
+            return lhs.minor < rhs.minor
+        }
+
         return lhs.patch < rhs.patch
     }
 }
