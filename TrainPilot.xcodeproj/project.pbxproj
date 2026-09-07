@@ -36,6 +36,8 @@
 		C72374A3304ED0620054808A /* SNCFPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237472304ED0620054808A /* SNCFPalette.swift */; };
 		C72374A6304ED09C0054808A /* CabContentMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72374A5304ED09C0054808A /* CabContentMode.swift */; };
 		C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72374A7304ED0B50054808A /* NetworkViewport.swift */; };
+		C72374AA304F6C260054808A /* TrainPilotCab.icns in Resources */ = {isa = PBXBuildFile; fileRef = C72374A9304F6C260054808A /* TrainPilotCab.icns */; };
+		C72374AE304F6E030054808A /* Asset.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C72374AD304F6E030054808A /* Asset.xcassets */; };
 		C7C50E2E30446EF7007036B2 /* AGENTS.md in Sources */ = {isa = PBXBuildFile; fileRef = C7C50E2D30446EF1007036B2 /* AGENTS.md */; };
 		C7C50E3030446F2E007036B2 /* RTK.md in Sources */ = {isa = PBXBuildFile; fileRef = C7C50E2F30446F29007036B2 /* RTK.md */; };
 /* End PBXBuildFile section */
@@ -82,6 +84,8 @@
 		C723748B304ED0620054808A /* PreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewData.swift; sourceTree = "<group>"; };
 		C72374A5304ED09C0054808A /* CabContentMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CabContentMode.swift; sourceTree = "<group>"; };
 		C72374A7304ED0B50054808A /* NetworkViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkViewport.swift; sourceTree = "<group>"; };
+		C72374A9304F6C260054808A /* TrainPilotCab.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = TrainPilotCab.icns; sourceTree = "<group>"; };
+		C72374AD304F6E030054808A /* Asset.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Asset.xcassets; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -114,6 +118,7 @@
 				000000000000000000000004 /* TrainPilotTests */,
 				000000000000000000000005 /* Products */,
 				00000000000000000000001B /* XCTest.framework */,
+				C72374A9304F6C260054808A /* TrainPilotCab.icns */,
 			);
 			sourceTree = "<group>";
 		};
@@ -126,6 +131,7 @@
 				C7237483304ED0620054808A /* Driving */,
 				C723748A304ED0620054808A /* Features */,
 				C723748C304ED0620054808A /* Preview */,
+				C72374AD304F6E030054808A /* Asset.xcassets */,
 			);
 			path = TrainPilot;
 			sourceTree = "<group>";
@@ -369,6 +375,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C72374AE304F6E030054808A /* Asset.xcassets in Resources */,
+				C72374AA304F6C260054808A /* TrainPilotCab.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -527,15 +535,19 @@
 		000000000000000000000015 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 3YCBWTYW6P;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TrainPilot/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "TrainPilot Cab";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 0.1.0;
@@ -548,15 +560,19 @@
 		000000000000000000000016 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 3YCBWTYW6P;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TrainPilot/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "TrainPilot Cab";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 0.1.0;
