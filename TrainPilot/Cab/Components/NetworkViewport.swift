@@ -1,18 +1,17 @@
-//
-//  NetworkViewport.swift
-//  TrainPilot
-//
-//  Created by Luc Dandoy on 07/09/2026.
-//
-
-
 import SwiftUI
 
 struct NetworkViewport: View {
-    @State private var networkSize = CGSize(
+    private let networkSize = CGSize(
         width: 1800,
         height: 1100
     )
+
+    private let minimumZoom: CGFloat = 0.40
+    private let maximumZoom: CGFloat = 2.50
+    private let zoomStep: CGFloat = 0.10
+
+    @State private var zoom: CGFloat = 1.0
+    @GestureState private var gestureMagnification: CGFloat = 1.0
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -22,27 +21,67 @@ struct NetworkViewport: View {
                         width: networkSize.width,
                         height: networkSize.height
                     )
+                    .scaleEffect(
+                        effectiveZoom,
+                        anchor: .topLeading
+                    )
+                    // scaleEffect does not change layout size. This outer
+                    // frame makes ScrollView aware of the scaled canvas.
+                    .frame(
+                        width: networkSize.width * effectiveZoom,
+                        height: networkSize.height * effectiveZoom,
+                        alignment: .topLeading
+                    )
             }
+            .simultaneousGesture(magnificationGesture)
 
             viewportLabel
                 .padding(12)
                 .allowsHitTesting(false)
+
+            zoomControls
+                .padding(12)
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .topTrailing
+                )
         }
         .background(Color.black.opacity(0.18))
         .frame(
             minWidth: 300,
             maxWidth: .infinity,
-            minHeight: 280,
+            minHeight: 180,
             maxHeight: .infinity
         )
     }
 
+    private var effectiveZoom: CGFloat {
+        clampedZoom(zoom * gestureMagnification)
+    }
+
+    private var magnificationGesture: some Gesture {
+        MagnificationGesture()
+            .updating($gestureMagnification) {
+                value,
+                state,
+                _ in
+
+                state = value
+            }
+            .onEnded { value in
+                zoom = clampedZoom(zoom * value)
+            }
+    }
+
     private var viewportLabel: some View {
         HStack(spacing: 8) {
-            Image(systemName: "point.3.connected.trianglepath.dotted")
+            Image(
+                systemName:
+                    "point.3.connected.trianglepath.dotted"
+            )
 
             Text("PLAN DU RÉSEAU")
-                .fontWeight(.bold)
+                .fontWeight(Font.Weight.bold)
 
             Text("• navigation X/Y")
                 .foregroundColor(.secondary)
@@ -53,12 +92,82 @@ struct NetworkViewport: View {
         .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 7)
-                .fill(SNCFPalette.panel.opacity(0.92))
+                .fill(
+                    SNCFPalette.panel.opacity(0.92)
+                )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 7)
-                .stroke(SNCFPalette.metal, lineWidth: 1)
+                .stroke(
+                    SNCFPalette.metal,
+                    lineWidth: 1
+                )
         )
+    }
+
+    private var zoomControls: some View {
+        HStack(spacing: 6) {
+            zoomButton(
+                systemImage: "minus",
+                help: "Dézoomer"
+            ) {
+                setZoom(zoom - zoomStep)
+            }
+
+            Button {
+                setZoom(1.0)
+            } label: {
+                Text("\(Int((zoom * 100).rounded())) %")
+                    .font(.caption.monospacedDigit())
+                    .frame(minWidth: 48)
+            }
+            .buttonStyle(.plain)
+            .help("Réinitialiser le zoom à 100 %")
+
+            zoomButton(
+                systemImage: "plus",
+                help: "Zoomer"
+            ) {
+                setZoom(zoom + zoomStep)
+            }
+        }
+        .foregroundColor(SNCFPalette.gauge)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 7)
+                .fill(
+                    SNCFPalette.panel.opacity(0.92)
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 7)
+                .stroke(
+                    SNCFPalette.metal,
+                    lineWidth: 1
+                )
+        )
+    }
+
+    private func zoomButton(
+        systemImage: String,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .frame(width: 22, height: 20)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    private func setZoom(_ value: CGFloat) {
+        zoom = clampedZoom(value)
+    }
+
+    private func clampedZoom(_ value: CGFloat) -> CGFloat {
+        min(max(value, minimumZoom), maximumZoom)
     }
 }
 
@@ -70,7 +179,6 @@ private struct NetworkPlaceholderCanvas: View {
             Color.black.opacity(0.12)
 
             grid
-
             demoTrack
         }
     }
@@ -79,8 +187,11 @@ private struct NetworkPlaceholderCanvas: View {
         GeometryReader { geometry in
             Path { path in
                 var x: CGFloat = 0
+
                 while x <= geometry.size.width {
-                    path.move(to: CGPoint(x: x, y: 0))
+                    path.move(
+                        to: CGPoint(x: x, y: 0)
+                    )
                     path.addLine(
                         to: CGPoint(
                             x: x,
@@ -91,8 +202,11 @@ private struct NetworkPlaceholderCanvas: View {
                 }
 
                 var y: CGFloat = 0
+
                 while y <= geometry.size.height {
-                    path.move(to: CGPoint(x: 0, y: y))
+                    path.move(
+                        to: CGPoint(x: 0, y: y)
+                    )
                     path.addLine(
                         to: CGPoint(
                             x: geometry.size.width,
@@ -111,15 +225,15 @@ private struct NetworkPlaceholderCanvas: View {
 
     private var demoTrack: some View {
         GeometryReader { geometry in
-            let w = geometry.size.width
-            let h = geometry.size.height
+            let width = geometry.size.width
+            let height = geometry.size.height
 
             Path { path in
                 let rect = CGRect(
-                    x: w * 0.18,
-                    y: h * 0.20,
-                    width: w * 0.58,
-                    height: h * 0.48
+                    x: width * 0.18,
+                    y: height * 0.20,
+                    width: width * 0.58,
+                    height: height * 0.48
                 )
 
                 path.addRoundedRect(
@@ -132,14 +246,14 @@ private struct NetworkPlaceholderCanvas: View {
 
                 path.move(
                     to: CGPoint(
-                        x: w * 0.34,
-                        y: h * 0.44
+                        x: width * 0.34,
+                        y: height * 0.44
                     )
                 )
                 path.addLine(
                     to: CGPoint(
-                        x: w * 0.64,
-                        y: h * 0.44
+                        x: width * 0.64,
+                        y: height * 0.44
                     )
                 )
             }
@@ -156,8 +270,8 @@ private struct NetworkPlaceholderCanvas: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .position(
-                    x: w * 0.47,
-                    y: h * 0.78
+                    x: width * 0.47,
+                    y: height * 0.78
                 )
         }
     }

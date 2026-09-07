@@ -302,17 +302,23 @@ private struct CabSessionView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            if geometry.size.width >= 1100 {
-                wideLayout
+            if geometry.size.width >= 1200 &&
+                geometry.size.height >= 800 {
+                wideLayout(size: geometry.size)
             } else {
-                compactLayout
+                compactLayout(size: geometry.size)
             }
         }
         .padding(18)
     }
 
-    private var wideLayout: some View {
-        VStack(spacing: 14) {
+    private func wideLayout(size: CGSize) -> some View {
+        let networkHeight = min(
+            max(size.height * 0.54, 360),
+            520
+        )
+
+        return VStack(spacing: 14) {
             locomotivePlate
 
             HStack(
@@ -328,7 +334,7 @@ private struct CabSessionView: View {
                     height: 220
                 )
                 .frame(
-                    minHeight: 420,
+                    height: networkHeight,
                     alignment: .center
                 )
 
@@ -336,8 +342,8 @@ private struct CabSessionView: View {
                     .frame(
                         minWidth: 420,
                         maxWidth: .infinity,
-                        minHeight: 420,
-                        maxHeight: .infinity
+                        minHeight: networkHeight,
+                        maxHeight: networkHeight
                     )
                     .layoutPriority(1)
 
@@ -393,13 +399,11 @@ private struct CabSessionView: View {
                 }
                 .frame(
                     width: 250,
+                    height: networkHeight,
                     alignment: .top
                 )
             }
-            .frame(
-                minHeight: 420,
-                maxHeight: .infinity
-            )
+            .frame(height: networkHeight)
 
             FunctionPanel(
                 session: session,
@@ -423,100 +427,99 @@ private struct CabSessionView: View {
         }
     }
 
-    private var compactLayout: some View {
-        ScrollView {
-            VStack(spacing: 14) {
-                locomotivePlate
+    private func compactLayout(size: CGSize) -> some View {
+        let networkHeight = min(
+            max(size.height * 0.42, 240),
+            360
+        )
 
-                CabContentArea(mode: contentMode)
-                    .frame(
-                        minHeight: 340,
-                        maxHeight: 460
-                    )
+        let controlSize = min(
+            max(size.height * 0.22, 150),
+            190
+        )
 
-                HStack(
-                    alignment: .top,
-                    spacing: 16
-                ) {
-                    SpeedGauge(
-                        requested:
-                            session.requestedSpeed,
-                        confirmed:
-                            session.confirmedSpeed
-                    )
-                    .frame(
-                        width: 180,
-                        height: 180
-                    )
+        let controlRowHeight = max(
+            controlSize,
+            174
+        )
 
-                    DirectionSelector(
-                        position:
-                            session.selectorPosition,
-                        speed:
-                            session.requestedSpeed,
-                        disabled: controlsDisabled
-                    ) { position in
-                        Task {
-                            await appModel
-                                .selectDirection(
-                                    locomotiveID:
-                                        session
-                                            .locomotive.id,
-                                    position: position
-                                )
-                        }
-                    }
+        return VStack(spacing: 12) {
+            locomotivePlate
 
-                    ThrottleWheel(
-                        value:
-                            session.requestedSpeed,
-                        confirmedValue:
-                            session.confirmedSpeed,
-                        enabled: throttleEnabled,
-                        onChange: { speed in
-                            appModel
-                                .setRequestedSpeed(
-                                    locomotiveID:
-                                        session
-                                            .locomotive.id,
-                                    speed: speed
-                                )
-                        },
-                        onCommit: {
-                            appModel.flushThrottle(
-                                locomotiveID:
-                                    session.locomotive.id
-                            )
-                        }
-                    )
-                    .frame(
-                        width: 200,
-                        height: 200
-                    )
-                }
+            CabContentArea(mode: contentMode)
+                .frame(height: networkHeight)
+                .layoutPriority(1)
 
-                FunctionPanel(
-                    session: session,
-                    functionCount: min(
-                        appModel.systemInfo?
-                            .station.functions ?? 13,
-                        13
-                    ),
-                    columnCount: 4,
+            HStack(
+                alignment: .center,
+                spacing: 16
+            ) {
+                SpeedGauge(
+                    requested: session.requestedSpeed,
+                    confirmed: session.confirmedSpeed
+                )
+                .frame(
+                    width: controlSize,
+                    height: controlSize
+                )
+
+                Spacer(minLength: 0)
+
+                DirectionSelector(
+                    position: session.selectorPosition,
+                    speed: session.requestedSpeed,
                     disabled: controlsDisabled
-                ) { function in
+                ) { position in
                     Task {
-                        await appModel
-                            .toggleFunction(
-                                locomotiveID:
-                                    session.locomotive.id,
-                                functionNumber:
-                                    function
-                            )
+                        await appModel.selectDirection(
+                            locomotiveID: session.locomotive.id,
+                            position: position
+                        )
                     }
                 }
-                .frame(height: 250)
+
+                Spacer(minLength: 0)
+
+                ThrottleWheel(
+                    value: session.requestedSpeed,
+                    confirmedValue: session.confirmedSpeed,
+                    enabled: throttleEnabled,
+                    onChange: { speed in
+                        appModel.setRequestedSpeed(
+                            locomotiveID: session.locomotive.id,
+                            speed: speed
+                        )
+                    },
+                    onCommit: {
+                        appModel.flushThrottle(
+                            locomotiveID: session.locomotive.id
+                        )
+                    }
+                )
+                .frame(
+                    width: controlSize,
+                    height: controlSize
+                )
             }
+            .frame(height: controlRowHeight)
+
+            FunctionPanel(
+                session: session,
+                functionCount: min(
+                    appModel.systemInfo?.station.functions ?? 13,
+                    13
+                ),
+                columnCount: 6,
+                disabled: controlsDisabled
+            ) { function in
+                Task {
+                    await appModel.toggleFunction(
+                        locomotiveID: session.locomotive.id,
+                        functionNumber: function
+                    )
+                }
+            }
+            .frame(height: 130)
         }
     }
 
