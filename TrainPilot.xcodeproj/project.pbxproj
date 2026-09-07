@@ -8,31 +8,34 @@
 
 /* Begin PBXBuildFile section */
 		00000000000000000000001C /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001B /* XCTest.framework */; };
-		00000000000000000000001E /* App/AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001D /* App/AppModel.swift */; };
-		000000000000000000000020 /* App/TrainPilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001F /* App/TrainPilotApp.swift */; };
-		000000000000000000000022 /* App/WindowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000021 /* App/WindowCoordinator.swift */; };
-		000000000000000000000024 /* Cab/Components/DirectionSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000023 /* Cab/Components/DirectionSelector.swift */; };
-		000000000000000000000026 /* Cab/Components/FunctionPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000025 /* Cab/Components/FunctionPanel.swift */; };
-		000000000000000000000028 /* Cab/Components/SpeedGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000027 /* Cab/Components/SpeedGauge.swift */; };
-		00000000000000000000002A /* Cab/Components/StatusPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000029 /* Cab/Components/StatusPill.swift */; };
-		00000000000000000000002C /* Cab/Components/ThrottleWheel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002B /* Cab/Components/ThrottleWheel.swift */; };
-		00000000000000000000002E /* Cab/Themes/SNCFClassicCabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002D /* Cab/Themes/SNCFClassicCabView.swift */; };
-		000000000000000000000030 /* Cab/Themes/SNCFPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002F /* Cab/Themes/SNCFPalette.swift */; };
-		000000000000000000000032 /* Core/Authentication/KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000031 /* Core/Authentication/KeychainStore.swift */; };
-		000000000000000000000034 /* Core/Models/Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000033 /* Core/Models/Models.swift */; };
-		000000000000000000000036 /* Core/Networking/APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000035 /* Core/Networking/APIClient.swift */; };
-		000000000000000000000038 /* Core/Networking/EventClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000037 /* Core/Networking/EventClient.swift */; };
-		00000000000000000000003A /* Core/Networking/SequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000039 /* Core/Networking/SequenceTracker.swift */; };
-		00000000000000000000003C /* Core/Preferences/AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000003B /* Core/Preferences/AppPreferences.swift */; };
-		00000000000000000000003E /* Driving/DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000003D /* Driving/DrivingSession.swift */; };
-		000000000000000000000040 /* Driving/DrivingSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000003F /* Driving/DrivingSessionManager.swift */; };
-		000000000000000000000042 /* Driving/KeyboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000041 /* Driving/KeyboardController.swift */; };
-		000000000000000000000044 /* Features/Library/LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000043 /* Features/Library/LibraryView.swift */; };
-		000000000000000000000046 /* Features/Login/LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000045 /* Features/Login/LoginView.swift */; };
-		000000000000000000000048 /* Features/Preferences/PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000047 /* Features/Preferences/PreferencesView.swift */; };
 		00000000000000000000004A /* SemanticVersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000049 /* SemanticVersionTests.swift */; };
 		00000000000000000000004C /* SequenceTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000004B /* SequenceTrackerTests.swift */; };
 		00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000004D /* ThrottleWheelMathTests.swift */; };
+		C723748D304ED0620054808A /* SpeedGauge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723746D304ED0620054808A /* SpeedGauge.swift */; };
+		C723748E304ED0620054808A /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237467304ED0620054808A /* AppModel.swift */; };
+		C723748F304ED0620054808A /* DrivingSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237481304ED0620054808A /* DrivingSessionManager.swift */; };
+		C7237490304ED0620054808A /* EventClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723747A304ED0620054808A /* EventClient.swift */; };
+		C7237491304ED0620054808A /* ThrottleWheel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723746F304ED0620054808A /* ThrottleWheel.swift */; };
+		C7237492304ED0620054808A /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237475304ED0620054808A /* KeychainStore.swift */; };
+		C7237493304ED0620054808A /* FunctionPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723746C304ED0620054808A /* FunctionPanel.swift */; };
+		C7237494304ED0620054808A /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237484304ED0620054808A /* LibraryView.swift */; };
+		C7237495304ED0620054808A /* KeyboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237482304ED0620054808A /* KeyboardController.swift */; };
+		C7237496304ED0620054808A /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237479304ED0620054808A /* APIClient.swift */; };
+		C7237497304ED0620054808A /* SNCFClassicCabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237471304ED0620054808A /* SNCFClassicCabView.swift */; };
+		C7237498304ED0620054808A /* PreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723748B304ED0620054808A /* PreviewData.swift */; };
+		C7237499304ED0620054808A /* StatusPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723746E304ED0620054808A /* StatusPill.swift */; };
+		C723749A304ED0620054808A /* TrainPilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237468304ED0620054808A /* TrainPilotApp.swift */; };
+		C723749B304ED0620054808A /* DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237480304ED0620054808A /* DrivingSession.swift */; };
+		C723749C304ED0620054808A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237486304ED0620054808A /* LoginView.swift */; };
+		C723749D304ED0620054808A /* DirectionSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723746B304ED0620054808A /* DirectionSelector.swift */; };
+		C723749E304ED0620054808A /* WindowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237469304ED0620054808A /* WindowCoordinator.swift */; };
+		C723749F304ED0620054808A /* SequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723747B304ED0620054808A /* SequenceTracker.swift */; };
+		C72374A0304ED0620054808A /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237488304ED0620054808A /* PreferencesView.swift */; };
+		C72374A1304ED0620054808A /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237477304ED0620054808A /* Models.swift */; };
+		C72374A2304ED0620054808A /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723747D304ED0620054808A /* AppPreferences.swift */; };
+		C72374A3304ED0620054808A /* SNCFPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237472304ED0620054808A /* SNCFPalette.swift */; };
+		C72374A6304ED09C0054808A /* CabContentMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72374A5304ED09C0054808A /* CabContentMode.swift */; };
+		C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72374A7304ED0B50054808A /* NetworkViewport.swift */; };
 		C7C50E2E30446EF7007036B2 /* AGENTS.md in Sources */ = {isa = PBXBuildFile; fileRef = C7C50E2D30446EF1007036B2 /* AGENTS.md */; };
 		C7C50E3030446F2E007036B2 /* RTK.md in Sources */ = {isa = PBXBuildFile; fileRef = C7C50E2F30446F29007036B2 /* RTK.md */; };
 /* End PBXBuildFile section */
@@ -51,31 +54,34 @@
 		000000000000000000000008 /* TrainPilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrainPilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000009 /* TrainPilotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TrainPilotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00000000000000000000001B /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
-		00000000000000000000001D /* App/AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppModel.swift; sourceTree = "<group>"; };
-		00000000000000000000001F /* App/TrainPilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/TrainPilotApp.swift; sourceTree = "<group>"; };
-		000000000000000000000021 /* App/WindowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/WindowCoordinator.swift; sourceTree = "<group>"; };
-		000000000000000000000023 /* Cab/Components/DirectionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Components/DirectionSelector.swift; sourceTree = "<group>"; };
-		000000000000000000000025 /* Cab/Components/FunctionPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Components/FunctionPanel.swift; sourceTree = "<group>"; };
-		000000000000000000000027 /* Cab/Components/SpeedGauge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Components/SpeedGauge.swift; sourceTree = "<group>"; };
-		000000000000000000000029 /* Cab/Components/StatusPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Components/StatusPill.swift; sourceTree = "<group>"; };
-		00000000000000000000002B /* Cab/Components/ThrottleWheel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Components/ThrottleWheel.swift; sourceTree = "<group>"; };
-		00000000000000000000002D /* Cab/Themes/SNCFClassicCabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Themes/SNCFClassicCabView.swift; sourceTree = "<group>"; };
-		00000000000000000000002F /* Cab/Themes/SNCFPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cab/Themes/SNCFPalette.swift; sourceTree = "<group>"; };
-		000000000000000000000031 /* Core/Authentication/KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Authentication/KeychainStore.swift; sourceTree = "<group>"; };
-		000000000000000000000033 /* Core/Models/Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Models/Models.swift; sourceTree = "<group>"; };
-		000000000000000000000035 /* Core/Networking/APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/APIClient.swift; sourceTree = "<group>"; };
-		000000000000000000000037 /* Core/Networking/EventClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/EventClient.swift; sourceTree = "<group>"; };
-		000000000000000000000039 /* Core/Networking/SequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Networking/SequenceTracker.swift; sourceTree = "<group>"; };
-		00000000000000000000003B /* Core/Preferences/AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Preferences/AppPreferences.swift; sourceTree = "<group>"; };
-		00000000000000000000003D /* Driving/DrivingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Driving/DrivingSession.swift; sourceTree = "<group>"; };
-		00000000000000000000003F /* Driving/DrivingSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Driving/DrivingSessionManager.swift; sourceTree = "<group>"; };
-		000000000000000000000041 /* Driving/KeyboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Driving/KeyboardController.swift; sourceTree = "<group>"; };
-		000000000000000000000043 /* Features/Library/LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Library/LibraryView.swift; sourceTree = "<group>"; };
-		000000000000000000000045 /* Features/Login/LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Login/LoginView.swift; sourceTree = "<group>"; };
-		000000000000000000000047 /* Features/Preferences/PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Preferences/PreferencesView.swift; sourceTree = "<group>"; };
 		000000000000000000000049 /* SemanticVersionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersionTests.swift; sourceTree = "<group>"; };
 		00000000000000000000004B /* SequenceTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SequenceTrackerTests.swift; sourceTree = "<group>"; };
 		00000000000000000000004D /* ThrottleWheelMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrottleWheelMathTests.swift; sourceTree = "<group>"; };
+		C7237467304ED0620054808A /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		C7237468304ED0620054808A /* TrainPilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainPilotApp.swift; sourceTree = "<group>"; };
+		C7237469304ED0620054808A /* WindowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCoordinator.swift; sourceTree = "<group>"; };
+		C723746B304ED0620054808A /* DirectionSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectionSelector.swift; sourceTree = "<group>"; };
+		C723746C304ED0620054808A /* FunctionPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionPanel.swift; sourceTree = "<group>"; };
+		C723746D304ED0620054808A /* SpeedGauge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedGauge.swift; sourceTree = "<group>"; };
+		C723746E304ED0620054808A /* StatusPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPill.swift; sourceTree = "<group>"; };
+		C723746F304ED0620054808A /* ThrottleWheel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThrottleWheel.swift; sourceTree = "<group>"; };
+		C7237471304ED0620054808A /* SNCFClassicCabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SNCFClassicCabView.swift; sourceTree = "<group>"; };
+		C7237472304ED0620054808A /* SNCFPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SNCFPalette.swift; sourceTree = "<group>"; };
+		C7237475304ED0620054808A /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		C7237477304ED0620054808A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		C7237479304ED0620054808A /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		C723747A304ED0620054808A /* EventClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventClient.swift; sourceTree = "<group>"; };
+		C723747B304ED0620054808A /* SequenceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SequenceTracker.swift; sourceTree = "<group>"; };
+		C723747D304ED0620054808A /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
+		C7237480304ED0620054808A /* DrivingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrivingSession.swift; sourceTree = "<group>"; };
+		C7237481304ED0620054808A /* DrivingSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrivingSessionManager.swift; sourceTree = "<group>"; };
+		C7237482304ED0620054808A /* KeyboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardController.swift; sourceTree = "<group>"; };
+		C7237484304ED0620054808A /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		C7237486304ED0620054808A /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		C7237488304ED0620054808A /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		C723748B304ED0620054808A /* PreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewData.swift; sourceTree = "<group>"; };
+		C72374A5304ED09C0054808A /* CabContentMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CabContentMode.swift; sourceTree = "<group>"; };
+		C72374A7304ED0B50054808A /* NetworkViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkViewport.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -114,28 +120,12 @@
 		000000000000000000000003 /* TrainPilot */ = {
 			isa = PBXGroup;
 			children = (
-				00000000000000000000001D /* App/AppModel.swift */,
-				00000000000000000000001F /* App/TrainPilotApp.swift */,
-				000000000000000000000021 /* App/WindowCoordinator.swift */,
-				000000000000000000000023 /* Cab/Components/DirectionSelector.swift */,
-				000000000000000000000025 /* Cab/Components/FunctionPanel.swift */,
-				000000000000000000000027 /* Cab/Components/SpeedGauge.swift */,
-				000000000000000000000029 /* Cab/Components/StatusPill.swift */,
-				00000000000000000000002B /* Cab/Components/ThrottleWheel.swift */,
-				00000000000000000000002D /* Cab/Themes/SNCFClassicCabView.swift */,
-				00000000000000000000002F /* Cab/Themes/SNCFPalette.swift */,
-				000000000000000000000031 /* Core/Authentication/KeychainStore.swift */,
-				000000000000000000000033 /* Core/Models/Models.swift */,
-				000000000000000000000035 /* Core/Networking/APIClient.swift */,
-				000000000000000000000037 /* Core/Networking/EventClient.swift */,
-				000000000000000000000039 /* Core/Networking/SequenceTracker.swift */,
-				00000000000000000000003B /* Core/Preferences/AppPreferences.swift */,
-				00000000000000000000003D /* Driving/DrivingSession.swift */,
-				00000000000000000000003F /* Driving/DrivingSessionManager.swift */,
-				000000000000000000000041 /* Driving/KeyboardController.swift */,
-				000000000000000000000043 /* Features/Library/LibraryView.swift */,
-				000000000000000000000045 /* Features/Login/LoginView.swift */,
-				000000000000000000000047 /* Features/Preferences/PreferencesView.swift */,
+				C723746A304ED0620054808A /* App */,
+				C7237474304ED0620054808A /* Cab */,
+				C723747F304ED0620054808A /* Core */,
+				C7237483304ED0620054808A /* Driving */,
+				C723748A304ED0620054808A /* Features */,
+				C723748C304ED0620054808A /* Preview */,
 			);
 			path = TrainPilot;
 			sourceTree = "<group>";
@@ -157,6 +147,145 @@
 				000000000000000000000009 /* TrainPilotTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C723746A304ED0620054808A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				C7237467304ED0620054808A /* AppModel.swift */,
+				C7237468304ED0620054808A /* TrainPilotApp.swift */,
+				C7237469304ED0620054808A /* WindowCoordinator.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		C7237470304ED0620054808A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				C72374A7304ED0B50054808A /* NetworkViewport.swift */,
+				C72374A5304ED09C0054808A /* CabContentMode.swift */,
+				C723746B304ED0620054808A /* DirectionSelector.swift */,
+				C723746C304ED0620054808A /* FunctionPanel.swift */,
+				C723746D304ED0620054808A /* SpeedGauge.swift */,
+				C723746E304ED0620054808A /* StatusPill.swift */,
+				C723746F304ED0620054808A /* ThrottleWheel.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		C7237473304ED0620054808A /* Themes */ = {
+			isa = PBXGroup;
+			children = (
+				C7237471304ED0620054808A /* SNCFClassicCabView.swift */,
+				C7237472304ED0620054808A /* SNCFPalette.swift */,
+			);
+			path = Themes;
+			sourceTree = "<group>";
+		};
+		C7237474304ED0620054808A /* Cab */ = {
+			isa = PBXGroup;
+			children = (
+				C7237470304ED0620054808A /* Components */,
+				C7237473304ED0620054808A /* Themes */,
+			);
+			path = Cab;
+			sourceTree = "<group>";
+		};
+		C7237476304ED0620054808A /* Authentication */ = {
+			isa = PBXGroup;
+			children = (
+				C7237475304ED0620054808A /* KeychainStore.swift */,
+			);
+			path = Authentication;
+			sourceTree = "<group>";
+		};
+		C7237478304ED0620054808A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				C7237477304ED0620054808A /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		C723747C304ED0620054808A /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				C7237479304ED0620054808A /* APIClient.swift */,
+				C723747A304ED0620054808A /* EventClient.swift */,
+				C723747B304ED0620054808A /* SequenceTracker.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		C723747E304ED0620054808A /* Preferences */ = {
+			isa = PBXGroup;
+			children = (
+				C723747D304ED0620054808A /* AppPreferences.swift */,
+			);
+			path = Preferences;
+			sourceTree = "<group>";
+		};
+		C723747F304ED0620054808A /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				C7237476304ED0620054808A /* Authentication */,
+				C7237478304ED0620054808A /* Models */,
+				C723747C304ED0620054808A /* Networking */,
+				C723747E304ED0620054808A /* Preferences */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		C7237483304ED0620054808A /* Driving */ = {
+			isa = PBXGroup;
+			children = (
+				C7237480304ED0620054808A /* DrivingSession.swift */,
+				C7237481304ED0620054808A /* DrivingSessionManager.swift */,
+				C7237482304ED0620054808A /* KeyboardController.swift */,
+			);
+			path = Driving;
+			sourceTree = "<group>";
+		};
+		C7237485304ED0620054808A /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				C7237484304ED0620054808A /* LibraryView.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
+		C7237487304ED0620054808A /* Login */ = {
+			isa = PBXGroup;
+			children = (
+				C7237486304ED0620054808A /* LoginView.swift */,
+			);
+			path = Login;
+			sourceTree = "<group>";
+		};
+		C7237489304ED0620054808A /* Preferences */ = {
+			isa = PBXGroup;
+			children = (
+				C7237488304ED0620054808A /* PreferencesView.swift */,
+			);
+			path = Preferences;
+			sourceTree = "<group>";
+		};
+		C723748A304ED0620054808A /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				C7237485304ED0620054808A /* Library */,
+				C7237487304ED0620054808A /* Login */,
+				C7237489304ED0620054808A /* Preferences */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		C723748C304ED0620054808A /* Preview */ = {
+			isa = PBXGroup;
+			children = (
+				C723748B304ED0620054808A /* PreviewData.swift */,
+			);
+			path = Preview;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,28 +386,31 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				00000000000000000000001E /* App/AppModel.swift in Sources */,
-				000000000000000000000020 /* App/TrainPilotApp.swift in Sources */,
-				000000000000000000000022 /* App/WindowCoordinator.swift in Sources */,
-				000000000000000000000024 /* Cab/Components/DirectionSelector.swift in Sources */,
-				000000000000000000000026 /* Cab/Components/FunctionPanel.swift in Sources */,
-				000000000000000000000028 /* Cab/Components/SpeedGauge.swift in Sources */,
-				00000000000000000000002A /* Cab/Components/StatusPill.swift in Sources */,
-				00000000000000000000002C /* Cab/Components/ThrottleWheel.swift in Sources */,
-				00000000000000000000002E /* Cab/Themes/SNCFClassicCabView.swift in Sources */,
-				000000000000000000000030 /* Cab/Themes/SNCFPalette.swift in Sources */,
-				000000000000000000000032 /* Core/Authentication/KeychainStore.swift in Sources */,
-				000000000000000000000034 /* Core/Models/Models.swift in Sources */,
-				000000000000000000000036 /* Core/Networking/APIClient.swift in Sources */,
-				000000000000000000000038 /* Core/Networking/EventClient.swift in Sources */,
-				00000000000000000000003A /* Core/Networking/SequenceTracker.swift in Sources */,
-				00000000000000000000003C /* Core/Preferences/AppPreferences.swift in Sources */,
-				00000000000000000000003E /* Driving/DrivingSession.swift in Sources */,
-				000000000000000000000040 /* Driving/DrivingSessionManager.swift in Sources */,
-				000000000000000000000042 /* Driving/KeyboardController.swift in Sources */,
-				000000000000000000000044 /* Features/Library/LibraryView.swift in Sources */,
-				000000000000000000000046 /* Features/Login/LoginView.swift in Sources */,
-				000000000000000000000048 /* Features/Preferences/PreferencesView.swift in Sources */,
+				C723748D304ED0620054808A /* SpeedGauge.swift in Sources */,
+				C723748E304ED0620054808A /* AppModel.swift in Sources */,
+				C723748F304ED0620054808A /* DrivingSessionManager.swift in Sources */,
+				C7237490304ED0620054808A /* EventClient.swift in Sources */,
+				C7237491304ED0620054808A /* ThrottleWheel.swift in Sources */,
+				C7237492304ED0620054808A /* KeychainStore.swift in Sources */,
+				C7237493304ED0620054808A /* FunctionPanel.swift in Sources */,
+				C7237494304ED0620054808A /* LibraryView.swift in Sources */,
+				C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */,
+				C7237495304ED0620054808A /* KeyboardController.swift in Sources */,
+				C7237496304ED0620054808A /* APIClient.swift in Sources */,
+				C7237497304ED0620054808A /* SNCFClassicCabView.swift in Sources */,
+				C7237498304ED0620054808A /* PreviewData.swift in Sources */,
+				C7237499304ED0620054808A /* StatusPill.swift in Sources */,
+				C72374A6304ED09C0054808A /* CabContentMode.swift in Sources */,
+				C723749A304ED0620054808A /* TrainPilotApp.swift in Sources */,
+				C723749B304ED0620054808A /* DrivingSession.swift in Sources */,
+				C723749C304ED0620054808A /* LoginView.swift in Sources */,
+				C723749D304ED0620054808A /* DirectionSelector.swift in Sources */,
+				C723749E304ED0620054808A /* WindowCoordinator.swift in Sources */,
+				C723749F304ED0620054808A /* SequenceTracker.swift in Sources */,
+				C72374A0304ED0620054808A /* PreferencesView.swift in Sources */,
+				C72374A1304ED0620054808A /* Models.swift in Sources */,
+				C72374A2304ED0620054808A /* AppPreferences.swift in Sources */,
+				C72374A3304ED0620054808A /* SNCFPalette.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -343,6 +475,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -385,6 +518,7 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 5.0;
 			};

@@ -8,7 +8,7 @@ struct TrainPilotApp: App {
         WindowGroup("TrainPilot") {
             RootView()
                 .environmentObject(appModel)
-                .frame(minWidth: 900, minHeight: 650)
+                .frame(minWidth: 1024, minHeight: 768)
         }
         .commands {
             CommandMenu("TrainPilot") {
