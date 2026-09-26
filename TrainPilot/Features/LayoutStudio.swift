@@ -180,13 +180,17 @@ final class LayoutStudioSession: ObservableObject {
     ) {
         self.draftStore = draftStore
         self.canPublish = canPublish
+        let origin: LayoutDocumentOrigin = snapshot == nil
+            ? .newLocal
+            : .server(ServerLayoutReference(serverIdentity: "current-server"))
         documentName = snapshot == nil ? "Nouveau réseau" : "Copie du layout publié"
         controller = LayoutEditorController(
             document: LayoutEditorDocument(
                 serverIdentity: "local:\(UUID().uuidString)",
                 snapshot: snapshot ?? Self.emptySnapshot,
                 draftStore: draftStore,
-                turnoutDefinitions: turnouts
+                turnoutDefinitions: turnouts,
+                origin: origin
             )
         )
     }
@@ -195,7 +199,8 @@ final class LayoutStudioSession: ObservableObject {
         replaceDocument(
             snapshot: Self.emptySnapshot,
             turnouts: [],
-            name: "Nouveau réseau"
+            name: "Nouveau réseau",
+            origin: .newLocal
         )
     }
 
@@ -214,7 +219,8 @@ final class LayoutStudioSession: ObservableObject {
             replaceDocument(
                 snapshot: contents.snapshot,
                 turnouts: contents.turnouts,
-                name: url.deletingPathExtension().lastPathComponent
+                name: url.deletingPathExtension().lastPathComponent,
+                origin: .localFile(url)
             )
             message = nil
         } catch {
@@ -258,14 +264,16 @@ final class LayoutStudioSession: ObservableObject {
     private func replaceDocument(
         snapshot: LayoutSnapshot,
         turnouts: [TurnoutDefinition],
-        name: String
+        name: String,
+        origin: LayoutDocumentOrigin
     ) {
         controller = LayoutEditorController(
             document: LayoutEditorDocument(
                 serverIdentity: "local:\(UUID().uuidString)",
                 snapshot: snapshot,
                 draftStore: draftStore,
-                turnoutDefinitions: turnouts
+                turnoutDefinitions: turnouts,
+                origin: origin
             )
         )
         documentName = name

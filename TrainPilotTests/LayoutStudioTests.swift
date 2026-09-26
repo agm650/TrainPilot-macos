@@ -37,6 +37,16 @@ final class LayoutStudioTests: XCTestCase {
         XCTAssertTrue(session.controller.document.topology.trackSections.isEmpty)
         XCTAssertTrue(session.controller.document.turnoutDefinitions.isEmpty)
         XCTAssertEqual(session.controller.document.presentation.gridSpacing, 20)
+        XCTAssertEqual(session.controller.document.origin, .newLocal)
+        XCTAssertNil(session.controller.document.baseTopologyRevision)
+        XCTAssertNil(session.controller.document.basePresentationRevision)
+    }
+
+    func testOperationalRendererModeIsDistinctFromEditorMode() {
+        XCTAssertNotEqual(
+            LayoutInteractionMode.operationalReadOnly,
+            .editor(showHandles: false)
+        )
     }
 
     func testLocalArchiveRoundTrip() throws {

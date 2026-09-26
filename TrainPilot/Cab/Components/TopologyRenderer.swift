@@ -1,8 +1,8 @@
 import SwiftUI
 
-enum TopologyRendererMode: Equatable {
+enum LayoutInteractionMode: Equatable {
     case editor(showHandles: Bool)
-    case readOnly
+    case operationalReadOnly
 }
 
 struct TopologyRuntimeState: Equatable, Sendable {
@@ -158,7 +158,7 @@ struct TopologyRenderPlan: Equatable, Sendable {
 struct TopologyRenderer: View {
     let plan: TopologyRenderPlan
     let transform: LayoutViewportTransform
-    let mode: TopologyRendererMode
+    let mode: LayoutInteractionMode
     let gridSpacing: Double
     let showsGrid: Bool
     var runtime: TopologyRuntimeState = .empty

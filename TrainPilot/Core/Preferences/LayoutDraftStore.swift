@@ -6,8 +6,9 @@ struct LayoutDraft: Codable, Equatable, Sendable {
 
     let draftFormatVersion: Int
     let serverIdentity: String
-    let baseTopologyRevision: String
-    let basePresentationRevision: String
+    let origin: LayoutDocumentOrigin?
+    let baseTopologyRevision: String?
+    let basePresentationRevision: String?
     let savedAt: Date
     let topology: TopologyDefinition
     let presentation: LayoutPresentationDefinition

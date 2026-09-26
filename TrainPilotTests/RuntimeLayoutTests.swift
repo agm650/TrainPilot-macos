@@ -174,7 +174,7 @@ final class RuntimeLayoutTests: XCTestCase {
         )
 
         XCTAssertEqual(plan.tracks.first?.blockIDs, ["block"])
-        XCTAssertEqual(TopologyRendererMode.readOnly, .readOnly)
+        XCTAssertEqual(LayoutInteractionMode.operationalReadOnly, .operationalReadOnly)
     }
 
     private func decodeTurnout(

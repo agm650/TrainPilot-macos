@@ -10,7 +10,7 @@ struct NetworkViewport: View {
                 LayoutCanvas(
                     topology: snapshot.topology,
                     presentation: snapshot.presentation,
-                    mode: .readOnly,
+                    mode: .operationalReadOnly,
                     runtime: TopologyRuntimeState(
                         blocks: model.blocks,
                         turnouts: model.turnouts

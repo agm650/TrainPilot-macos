@@ -86,10 +86,14 @@ final class LayoutPublicationCoordinator: ObservableObject {
         document: LayoutEditorDocument,
         serverSnapshot: LayoutSnapshot
     ) -> LayoutRevisionConflict {
+        guard let baseTopologyRevision = document.baseTopologyRevision,
+              let basePresentationRevision = document.basePresentationRevision else {
+            return .none
+        }
         let topologyChanged =
-            document.baseTopologyRevision != serverSnapshot.topology.revision
+            baseTopologyRevision != serverSnapshot.topology.revision
         let presentationChanged =
-            document.basePresentationRevision != serverSnapshot.presentation.revision
+            basePresentationRevision != serverSnapshot.presentation.revision
 
         switch (topologyChanged, presentationChanged) {
         case (false, false):
@@ -164,8 +168,8 @@ final class LayoutPublicationCoordinator: ObservableObject {
         do {
             try await api.importLayout(archive: archive.data, mode: .replace)
             pendingBaseRevisions = (
-                document.baseTopologyRevision,
-                document.basePresentationRevision
+                serverSnapshot.topology.revision,
+                serverSnapshot.presentation.revision
             )
             state = .awaitingCanonicalRevisions
         } catch {

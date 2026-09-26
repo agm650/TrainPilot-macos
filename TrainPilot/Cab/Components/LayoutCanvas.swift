@@ -3,7 +3,7 @@ import SwiftUI
 struct LayoutCanvas: View {
     let topology: TopologyDefinition
     let presentation: LayoutPresentationDefinition
-    let mode: TopologyRendererMode
+    let mode: LayoutInteractionMode
     var runtime: TopologyRuntimeState = .empty
     var onTurnoutSelected: ((String) -> Void)?
 
@@ -37,7 +37,7 @@ struct LayoutCanvas: View {
                     zoom: transform.zoom,
                     showsGrid: $showsGrid,
                     snapToGrid: $snapToGrid,
-                    showsSnapControl: mode != .readOnly,
+                    showsSnapControl: mode != .operationalReadOnly,
                     zoomOut: { setZoom(transform.zoom - 0.25, in: geometry.size) },
                     resetZoom: { setZoom(1, in: geometry.size) },
                     zoomIn: { setZoom(transform.zoom + 0.25, in: geometry.size) }
@@ -50,7 +50,7 @@ struct LayoutCanvas: View {
 
     @ViewBuilder
     private func turnoutHitTargets(in size: CGSize) -> some View {
-        if mode == .readOnly, let onTurnoutSelected {
+        if mode == .operationalReadOnly, let onTurnoutSelected {
             let viewport = effectiveTransform(in: size)
             ForEach(presentation.turnouts, id: \.turnoutId) { turnout in
                 Button {

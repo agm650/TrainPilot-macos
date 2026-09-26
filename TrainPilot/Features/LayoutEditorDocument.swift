@@ -1,6 +1,16 @@
 import Combine
 import Foundation
 
+struct ServerLayoutReference: Codable, Equatable, Sendable {
+    let serverIdentity: String
+}
+
+enum LayoutDocumentOrigin: Codable, Equatable, Sendable {
+    case newLocal
+    case localFile(URL)
+    case server(ServerLayoutReference)
+}
+
 enum LayoutEditorServerState: Equatable {
     case matchesBase
     case changed(topologyRevision: String, presentationRevision: String)
@@ -59,8 +69,9 @@ final class LayoutEditorDocument: ObservableObject {
     @Published private(set) var validationState: LayoutEditorValidationState = .notValidated
 
     let serverIdentity: String
-    let baseTopologyRevision: String
-    let basePresentationRevision: String
+    let origin: LayoutDocumentOrigin
+    let baseTopologyRevision: String?
+    let basePresentationRevision: String?
 
     private let draftStore: any LayoutDraftStoring
     private let autosaveDelayNanoseconds: UInt64
@@ -74,14 +85,25 @@ final class LayoutEditorDocument: ObservableObject {
         snapshot: LayoutSnapshot,
         draftStore: any LayoutDraftStoring,
         turnoutDefinitions: [TurnoutDefinition] = [],
+        origin: LayoutDocumentOrigin? = nil,
         autosaveDelayNanoseconds: UInt64 = 1_000_000_000
     ) {
         self.serverIdentity = serverIdentity
+        let resolvedOrigin = origin ?? .server(
+            ServerLayoutReference(serverIdentity: serverIdentity)
+        )
+        self.origin = resolvedOrigin
         self.topology = snapshot.topology
         self.presentation = snapshot.presentation
         self.turnoutDefinitions = turnoutDefinitions
-        self.baseTopologyRevision = snapshot.topology.revision
-        self.basePresentationRevision = snapshot.presentation.revision
+        switch resolvedOrigin {
+        case .server:
+            self.baseTopologyRevision = snapshot.topology.revision
+            self.basePresentationRevision = snapshot.presentation.revision
+        case .newLocal, .localFile:
+            self.baseTopologyRevision = nil
+            self.basePresentationRevision = nil
+        }
         self.draftStore = draftStore
         self.autosaveDelayNanoseconds = autosaveDelayNanoseconds
         self.isDirty = false
@@ -97,6 +119,9 @@ final class LayoutEditorDocument: ObservableObject {
         autosaveDelayNanoseconds: UInt64 = 1_000_000_000
     ) {
         self.serverIdentity = draft.serverIdentity
+        self.origin = draft.origin ?? .server(
+            ServerLayoutReference(serverIdentity: draft.serverIdentity)
+        )
         self.topology = draft.topology
         self.presentation = draft.presentation
         self.turnoutDefinitions = draft.turnouts ?? []
@@ -313,6 +338,7 @@ final class LayoutEditorDocument: ObservableObject {
         LayoutDraft(
             draftFormatVersion: LayoutDraft.currentFormatVersion,
             serverIdentity: serverIdentity,
+            origin: origin,
             baseTopologyRevision: baseTopologyRevision,
             basePresentationRevision: basePresentationRevision,
             savedAt: savedAt,

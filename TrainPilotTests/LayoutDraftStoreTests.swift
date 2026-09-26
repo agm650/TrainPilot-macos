@@ -107,6 +107,7 @@ func makeDraft(serverIdentity: String) -> LayoutDraft {
     LayoutDraft(
         draftFormatVersion: LayoutDraft.currentFormatVersion,
         serverIdentity: serverIdentity,
+        origin: nil,
         baseTopologyRevision: "topology-1",
         basePresentationRevision: "presentation-1",
         savedAt: Date(timeIntervalSince1970: 1_000),
