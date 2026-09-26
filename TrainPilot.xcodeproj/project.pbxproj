@@ -51,6 +51,8 @@
 		C7AFB23930682F930016FE77 /* LayoutCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23830682F930016FE77 /* LayoutCanvas.swift */; };
 		C7AFB23B30682F940016FE77 /* LayoutViewportTransformTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23A30682F940016FE77 /* LayoutViewportTransformTests.swift */; };
 		C7AFB23D30682F940016FE77 /* TopologyRenderPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23C30682F940016FE77 /* TopologyRenderPlanTests.swift */; };
+		C7AFB23F306830460016FE77 /* LayoutEditorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23E306830460016FE77 /* LayoutEditorController.swift */; };
+		C7AFB241306830470016FE77 /* LayoutEditorControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB240306830470016FE77 /* LayoutEditorControllerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +112,8 @@
 		C7AFB23830682F930016FE77 /* LayoutCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutCanvas.swift; sourceTree = "<group>"; };
 		C7AFB23A30682F940016FE77 /* LayoutViewportTransformTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutViewportTransformTests.swift; sourceTree = "<group>"; };
 		C7AFB23C30682F940016FE77 /* TopologyRenderPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyRenderPlanTests.swift; sourceTree = "<group>"; };
+		C7AFB23E306830460016FE77 /* LayoutEditorController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutEditorController.swift; sourceTree = "<group>"; };
+		C7AFB240306830470016FE77 /* LayoutEditorControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutEditorControllerTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -172,6 +176,7 @@
 				C7AFB23030682DF50016FE77 /* LayoutEditorDocumentTests.swift */,
 				C7AFB23A30682F940016FE77 /* LayoutViewportTransformTests.swift */,
 				C7AFB23C30682F940016FE77 /* TopologyRenderPlanTests.swift */,
+				C7AFB240306830470016FE77 /* LayoutEditorControllerTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -320,6 +325,7 @@
 				C7237489304ED0620054808A /* Preferences */,
 				C7AFB22D30682DF40016FE77 /* LayoutEditor 2 */,
 				C7AFB23230682DFB0016FE77 /* LayoutEditorDocument.swift */,
+				C7AFB23E306830460016FE77 /* LayoutEditorController.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -459,6 +465,7 @@
 				C7237499304ED0620054808A /* StatusPill.swift in Sources */,
 				C72374A6304ED09C0054808A /* CabContentMode.swift in Sources */,
 				C723749A304ED0620054808A /* TrainPilotApp.swift in Sources */,
+				C7AFB23F306830460016FE77 /* LayoutEditorController.swift in Sources */,
 				C723749B304ED0620054808A /* DrivingSession.swift in Sources */,
 				C723749C304ED0620054808A /* LoginView.swift in Sources */,
 				C723749D304ED0620054808A /* DirectionSelector.swift in Sources */,
@@ -478,6 +485,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7AFB241306830470016FE77 /* LayoutEditorControllerTests.swift in Sources */,
 				00000000000000000000004A /* SemanticVersionTests.swift in Sources */,
 				00000000000000000000004C /* SequenceTrackerTests.swift in Sources */,
 				C7AFB23B30682F940016FE77 /* LayoutViewportTransformTests.swift in Sources */,

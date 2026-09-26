@@ -64,6 +64,8 @@ final class LayoutEditorDocument: ObservableObject {
     private let draftStore: any LayoutDraftStoring
     private let autosaveDelayNanoseconds: UInt64
     private var autosaveTask: Task<Void, Never>?
+    private var savedTopology: TopologyDefinition
+    private var savedPresentation: LayoutPresentationDefinition
 
     init(
         serverIdentity: String,
@@ -80,6 +82,8 @@ final class LayoutEditorDocument: ObservableObject {
         self.autosaveDelayNanoseconds = autosaveDelayNanoseconds
         self.isDirty = false
         self.serverState = .matchesBase
+        self.savedTopology = snapshot.topology
+        self.savedPresentation = snapshot.presentation
     }
 
     init(
@@ -97,6 +101,8 @@ final class LayoutEditorDocument: ObservableObject {
         self.isDirty = false
         self.lastLocalSaveDate = draft.savedAt
         self.serverState = .matchesBase
+        self.savedTopology = draft.topology
+        self.savedPresentation = draft.presentation
     }
 
     deinit {
@@ -192,6 +198,12 @@ final class LayoutEditorDocument: ObservableObject {
         didMutate()
     }
 
+    func replaceSnapshot(_ snapshot: LayoutSnapshot) {
+        topology = snapshot.topology
+        presentation = snapshot.presentation
+        didMutate()
+    }
+
     func updateServerRevisions(
         topologyRevision: String,
         presentationRevision: String
@@ -225,6 +237,8 @@ final class LayoutEditorDocument: ObservableObject {
         let savedAt = Date()
         try await draftStore.save(makeDraft(savedAt: savedAt))
         lastLocalSaveDate = savedAt
+        savedTopology = topology
+        savedPresentation = presentation
         isDirty = false
     }
 
@@ -241,9 +255,14 @@ final class LayoutEditorDocument: ObservableObject {
     }
 
     private func didMutate() {
-        isDirty = true
+        isDirty = topology != savedTopology || presentation != savedPresentation
         validationState = .notValidated
-        scheduleAutosave()
+        if isDirty {
+            scheduleAutosave()
+        } else {
+            autosaveTask?.cancel()
+            autosaveTask = nil
+        }
     }
 
     private func scheduleAutosave() {
