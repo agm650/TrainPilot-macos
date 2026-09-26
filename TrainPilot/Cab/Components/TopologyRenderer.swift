@@ -13,8 +13,15 @@ struct TopologyRenderPlan: Equatable, Sendable {
         let blockStyles: [LayoutBlockStyle]
     }
 
+    struct Turnout: Equatable, Sendable, Identifiable {
+        let presentation: LayoutTurnoutPresentation
+        let blockStyles: [LayoutBlockStyle]
+
+        var id: String { presentation.turnoutId }
+    }
+
     let tracks: [Track]
-    let turnouts: [LayoutTurnoutPresentation]
+    let turnouts: [Turnout]
     let nodes: [LayoutNodePosition]
 
     init(
@@ -54,7 +61,16 @@ struct TopologyRenderPlan: Equatable, Sendable {
                 blockStyles: styles
             )
         }
-        turnouts = presentation.turnouts
+        turnouts = presentation.turnouts.map { turnout in
+            let styles = topology.blocks.compactMap {
+                block -> LayoutBlockStyle? in
+                guard block.turnoutIds?.contains(turnout.turnoutId) == true else {
+                    return nil
+                }
+                return blockStyles[block.id]
+            }
+            return Turnout(presentation: turnout, blockStyles: styles)
+        }
         nodes = presentation.nodes
     }
 }
@@ -142,8 +158,9 @@ struct TopologyRenderer: View {
 
     private func drawTurnouts(context: inout GraphicsContext) {
         for turnout in plan.turnouts {
+            let presentation = turnout.presentation
             let center = transform.canvasPoint(
-                for: LayoutPoint(x: turnout.x, y: turnout.y)
+                for: LayoutPoint(x: presentation.x, y: presentation.y)
             )
             let radius = max(5, 7 * transform.zoom)
             let rect = CGRect(
@@ -152,6 +169,12 @@ struct TopologyRenderer: View {
                 width: radius * 2,
                 height: radius * 2
             )
+            for style in turnout.blockStyles {
+                context.fill(
+                    Path(ellipseIn: rect.insetBy(dx: -6, dy: -6)),
+                    with: .color(Color(hex: style.color).opacity(style.opacity))
+                )
+            }
             context.fill(Path(ellipseIn: rect), with: .color(.orange))
             context.stroke(
                 Path(ellipseIn: rect),
