@@ -53,6 +53,8 @@
 		C7AFB23D30682F940016FE77 /* TopologyRenderPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23C30682F940016FE77 /* TopologyRenderPlanTests.swift */; };
 		C7AFB23F306830460016FE77 /* LayoutEditorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23E306830460016FE77 /* LayoutEditorController.swift */; };
 		C7AFB241306830470016FE77 /* LayoutEditorControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB240306830470016FE77 /* LayoutEditorControllerTests.swift */; };
+		C7AFB243306830D10016FE77 /* LayoutTrackEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB242306830D10016FE77 /* LayoutTrackEditing.swift */; };
+		C7AFB245306830D10016FE77 /* LayoutTrackEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB244306830D10016FE77 /* LayoutTrackEditingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +116,8 @@
 		C7AFB23C30682F940016FE77 /* TopologyRenderPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyRenderPlanTests.swift; sourceTree = "<group>"; };
 		C7AFB23E306830460016FE77 /* LayoutEditorController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutEditorController.swift; sourceTree = "<group>"; };
 		C7AFB240306830470016FE77 /* LayoutEditorControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutEditorControllerTests.swift; sourceTree = "<group>"; };
+		C7AFB242306830D10016FE77 /* LayoutTrackEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTrackEditing.swift; sourceTree = "<group>"; };
+		C7AFB244306830D10016FE77 /* LayoutTrackEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTrackEditingTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -177,6 +181,7 @@
 				C7AFB23A30682F940016FE77 /* LayoutViewportTransformTests.swift */,
 				C7AFB23C30682F940016FE77 /* TopologyRenderPlanTests.swift */,
 				C7AFB240306830470016FE77 /* LayoutEditorControllerTests.swift */,
+				C7AFB244306830D10016FE77 /* LayoutTrackEditingTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -326,6 +331,7 @@
 				C7AFB22D30682DF40016FE77 /* LayoutEditor 2 */,
 				C7AFB23230682DFB0016FE77 /* LayoutEditorDocument.swift */,
 				C7AFB23E306830460016FE77 /* LayoutEditorController.swift */,
+				C7AFB242306830D10016FE77 /* LayoutTrackEditing.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -451,6 +457,7 @@
 				C723748E304ED0620054808A /* AppModel.swift in Sources */,
 				C723748F304ED0620054808A /* DrivingSessionManager.swift in Sources */,
 				C7237490304ED0620054808A /* EventClient.swift in Sources */,
+				C7AFB243306830D10016FE77 /* LayoutTrackEditing.swift in Sources */,
 				C7237491304ED0620054808A /* ThrottleWheel.swift in Sources */,
 				C7AFB23930682F930016FE77 /* LayoutCanvas.swift in Sources */,
 				C7237492304ED0620054808A /* KeychainStore.swift in Sources */,
@@ -494,6 +501,7 @@
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,
 				C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */,
 				C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */,
+				C7AFB245306830D10016FE77 /* LayoutTrackEditingTests.swift in Sources */,
 				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
