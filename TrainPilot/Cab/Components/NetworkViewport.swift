@@ -1,50 +1,35 @@
 import SwiftUI
 
 struct NetworkViewport: View {
-    private let networkSize = CGSize(
-        width: 1800,
-        height: 1100
-    )
-
-    private let minimumZoom: CGFloat = 0.40
-    private let maximumZoom: CGFloat = 2.50
-    private let zoomStep: CGFloat = 0.10
-
-    @State private var zoom: CGFloat = 1.0
-    @GestureState private var gestureMagnification: CGFloat = 1.0
+    @EnvironmentObject private var model: AppModel
+    @State private var selectedTurnoutID: String?
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            ScrollView([.horizontal, .vertical]) {
-                NetworkPlaceholderCanvas()
-                    .frame(
-                        width: networkSize.width,
-                        height: networkSize.height
-                    )
-                    .scaleEffect(
-                        effectiveZoom,
-                        anchor: .topLeading
-                    )
-                    // scaleEffect does not change layout size. This outer
-                    // frame makes ScrollView aware of the scaled canvas.
-                    .frame(
-                        width: networkSize.width * effectiveZoom,
-                        height: networkSize.height * effectiveZoom,
-                        alignment: .topLeading
-                    )
+            if let snapshot = model.layoutRepository?.snapshot {
+                LayoutCanvas(
+                    topology: snapshot.topology,
+                    presentation: snapshot.presentation,
+                    mode: .readOnly,
+                    runtime: TopologyRuntimeState(
+                        blocks: model.blocks,
+                        turnouts: model.turnouts
+                    ),
+                    onTurnoutSelected: { selectedTurnoutID = $0 }
+                )
+            } else {
+                unavailableState
             }
-            .simultaneousGesture(magnificationGesture)
 
             viewportLabel
                 .padding(12)
                 .allowsHitTesting(false)
 
-            zoomControls
-                .padding(12)
-                .frame(
-                    maxWidth: .infinity,
-                    alignment: .topTrailing
-                )
+            if let turnout = selectedTurnout {
+                turnoutPanel(turnout)
+                    .padding(.top, 52)
+                    .padding(.leading, 12)
+            }
         }
         .background(Color.black.opacity(0.18))
         .frame(
@@ -55,35 +40,34 @@ struct NetworkViewport: View {
         )
     }
 
-    private var effectiveZoom: CGFloat {
-        clampedZoom(zoom * gestureMagnification)
+    private var selectedTurnout: Turnout? {
+        model.turnouts.first { $0.id == selectedTurnoutID }
     }
 
-    private var magnificationGesture: some Gesture {
-        MagnificationGesture()
-            .updating($gestureMagnification) {
-                value,
-                state,
-                _ in
+    private var canCommandTurnouts: Bool {
+        model.stationStatus.connectivity == .online &&
+            model.systemInfo?.station.accessoryControl == true
+    }
 
-                state = value
-            }
-            .onEnded { value in
-                zoom = clampedZoom(zoom * value)
-            }
+    private var unavailableState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "point.3.connected.trianglepath.dotted")
+                .font(.title)
+            Text("Plan du réseau indisponible")
+                .font(.headline)
+            Text("Le plan réapparaîtra après synchronisation avec le serveur.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var viewportLabel: some View {
         HStack(spacing: 8) {
-            Image(
-                systemName:
-                    "point.3.connected.trianglepath.dotted"
-            )
-
+            Image(systemName: "point.3.connected.trianglepath.dotted")
             Text("PLAN DU RÉSEAU")
-                .fontWeight(Font.Weight.bold)
-
-            Text("• navigation X/Y")
+                .fontWeight(.bold)
+            Text("• lecture seule")
                 .foregroundColor(.secondary)
         }
         .font(.caption)
@@ -92,187 +76,98 @@ struct NetworkViewport: View {
         .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 7)
-                .fill(
-                    SNCFPalette.panel.opacity(0.92)
-                )
+                .fill(SNCFPalette.panel.opacity(0.92))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 7)
-                .stroke(
-                    SNCFPalette.metal,
-                    lineWidth: 1
-                )
+                .stroke(SNCFPalette.metal, lineWidth: 1)
         )
     }
 
-    private var zoomControls: some View {
-        HStack(spacing: 6) {
-            zoomButton(
-                systemImage: "minus",
-                help: "Dézoomer"
-            ) {
-                setZoom(zoom - zoomStep)
+    private func turnoutPanel(_ turnout: Turnout) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(turnout.name)
+                    .font(.headline)
+                Spacer()
+                Button {
+                    selectedTurnoutID = nil
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Fermer")
             }
 
-            Button {
-                setZoom(1.0)
-            } label: {
-                Text("\(Int((zoom * 100).rounded())) %")
-                    .font(.caption.monospacedDigit())
-                    .frame(minWidth: 48)
+            HStack(spacing: 12) {
+                runtimeValue(
+                    label: "Demandé",
+                    value: turnout.desiredPosition.isEmpty
+                        ? "inconnu"
+                        : turnout.desiredPosition
+                )
+                runtimeValue(
+                    label: "Confirmé",
+                    value: turnout.reportedPosition.isEmpty
+                        ? "inconnu"
+                        : turnout.reportedPosition
+                )
             }
-            .buttonStyle(.plain)
-            .help("Réinitialiser le zoom à 100 %")
 
-            zoomButton(
-                systemImage: "plus",
-                help: "Zoomer"
-            ) {
-                setZoom(zoom + zoomStep)
+            if turnout.pending {
+                Label("Transition en cours", systemImage: "clock.arrow.circlepath")
+                    .foregroundColor(.yellow)
+            } else if turnout.reportedStatus == .invalid {
+                Label("Position physique incohérente", systemImage: "exclamationmark.triangle")
+                    .foregroundColor(.red)
+            } else if turnout.reportedStatus == .unknown {
+                Label("Position non confirmée", systemImage: "questionmark.circle")
+                    .foregroundColor(.secondary)
+            }
+
+            Divider()
+
+            ForEach(turnout.positions) { position in
+                Button(position.label ?? position.id) {
+                    Task {
+                        await model.setTurnout(
+                            id: turnout.id,
+                            position: position.id
+                        )
+                    }
+                }
+                .disabled(!canCommandTurnouts || turnout.pending)
+            }
+
+            if !canCommandTurnouts {
+                Text(commandUnavailableReason)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
-        .foregroundColor(SNCFPalette.gauge)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 7)
-                .fill(
-                    SNCFPalette.panel.opacity(0.92)
-                )
-        )
+        .padding(12)
+        .frame(width: 260)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 9))
         .overlay(
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(
-                    SNCFPalette.metal,
-                    lineWidth: 1
-                )
+            RoundedRectangle(cornerRadius: 9)
+                .stroke(SNCFPalette.metal, lineWidth: 1)
         )
     }
 
-    private func zoomButton(
-        systemImage: String,
-        help: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .frame(width: 22, height: 20)
+    private var commandUnavailableReason: String {
+        if model.stationStatus.connectivity != .online {
+            return "Commande indisponible : centrale hors ligne"
         }
-        .buttonStyle(.plain)
-        .help(help)
+        return "Commande d’aiguillage non prise en charge"
     }
 
-    private func setZoom(_ value: CGFloat) {
-        zoom = clampedZoom(value)
-    }
-
-    private func clampedZoom(_ value: CGFloat) -> CGFloat {
-        min(max(value, minimumZoom), maximumZoom)
-    }
-}
-
-private struct NetworkPlaceholderCanvas: View {
-    private let gridStep: CGFloat = 80
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.12)
-
-            grid
-            demoTrack
-        }
-    }
-
-    private var grid: some View {
-        GeometryReader { geometry in
-            Path { path in
-                var x: CGFloat = 0
-
-                while x <= geometry.size.width {
-                    path.move(
-                        to: CGPoint(x: x, y: 0)
-                    )
-                    path.addLine(
-                        to: CGPoint(
-                            x: x,
-                            y: geometry.size.height
-                        )
-                    )
-                    x += gridStep
-                }
-
-                var y: CGFloat = 0
-
-                while y <= geometry.size.height {
-                    path.move(
-                        to: CGPoint(x: 0, y: y)
-                    )
-                    path.addLine(
-                        to: CGPoint(
-                            x: geometry.size.width,
-                            y: y
-                        )
-                    )
-                    y += gridStep
-                }
-            }
-            .stroke(
-                Color.secondary.opacity(0.10),
-                lineWidth: 1
-            )
-        }
-    }
-
-    private var demoTrack: some View {
-        GeometryReader { geometry in
-            let width = geometry.size.width
-            let height = geometry.size.height
-
-            Path { path in
-                let rect = CGRect(
-                    x: width * 0.18,
-                    y: height * 0.20,
-                    width: width * 0.58,
-                    height: height * 0.48
-                )
-
-                path.addRoundedRect(
-                    in: rect,
-                    cornerSize: CGSize(
-                        width: 180,
-                        height: 180
-                    )
-                )
-
-                path.move(
-                    to: CGPoint(
-                        x: width * 0.34,
-                        y: height * 0.44
-                    )
-                )
-                path.addLine(
-                    to: CGPoint(
-                        x: width * 0.64,
-                        y: height * 0.44
-                    )
-                )
-            }
-            .stroke(
-                SNCFPalette.metal.opacity(0.8),
-                style: StrokeStyle(
-                    lineWidth: 5,
-                    lineCap: .round,
-                    lineJoin: .round
-                )
-            )
-
-            Text("Placeholder réseau")
-                .font(.caption)
+    private func runtimeValue(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption2)
                 .foregroundColor(.secondary)
-                .position(
-                    x: width * 0.47,
-                    y: height * 0.78
-                )
+            Text(value)
+                .font(.caption.monospaced())
         }
     }
 }

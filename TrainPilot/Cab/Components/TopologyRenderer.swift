@@ -5,17 +5,86 @@ enum TopologyRendererMode: Equatable {
     case readOnly
 }
 
+struct TopologyRuntimeState: Equatable, Sendable {
+    enum OccupancyEmphasis: Equatable {
+        case none
+        case unknown
+        case occupied
+    }
+
+    enum TurnoutVisualState: Equatable {
+        case unknown
+        case confirmed
+        case transitioning
+        case inconsistent
+        case failed
+    }
+
+    var blockOccupancy: [String: BlockOccupancyState]
+    var turnoutStates: [String: Turnout]
+
+    static let empty = TopologyRuntimeState(
+        blockOccupancy: [:],
+        turnoutStates: [:]
+    )
+
+    init(blocks: [Block] = [], turnouts: [Turnout] = []) {
+        blockOccupancy = Dictionary(
+            uniqueKeysWithValues: blocks.map { ($0.id, $0.occupancyState) }
+        )
+        turnoutStates = Dictionary(
+            uniqueKeysWithValues: turnouts.map { ($0.id, $0) }
+        )
+    }
+
+    init(
+        blockOccupancy: [String: BlockOccupancyState],
+        turnoutStates: [String: Turnout]
+    ) {
+        self.blockOccupancy = blockOccupancy
+        self.turnoutStates = turnoutStates
+    }
+
+    func occupancyEmphasis(for blockIDs: [String]) -> OccupancyEmphasis {
+        let states = blockIDs.compactMap { blockOccupancy[$0] }
+        if states.contains(.occupied) { return .occupied }
+        if states.contains(.unknown) { return .unknown }
+        return .none
+    }
+
+    func turnoutVisualState(for id: String) -> TurnoutVisualState {
+        guard let turnout = turnoutStates[id] else { return .unknown }
+        if turnout.reportedStatus == .invalid ||
+            turnout.commandStatus == .failed ||
+            turnout.commandStatus == .timeout {
+            return .failed
+        }
+        if turnout.pending || turnout.commandStatus == .pending {
+            return .transitioning
+        }
+        if turnout.reportedStatus == .unknown {
+            return .unknown
+        }
+        if turnout.desiredPosition != turnout.reportedPosition {
+            return .inconsistent
+        }
+        return .confirmed
+    }
+}
+
 struct TopologyRenderPlan: Equatable, Sendable {
     struct Track: Equatable, Sendable, Identifiable {
         let id: String
         let start: LayoutPoint
         let segments: [LayoutTrackSegment]
         let blockStyles: [LayoutBlockStyle]
+        let blockIDs: [String]
     }
 
     struct Turnout: Equatable, Sendable, Identifiable {
         let presentation: LayoutTurnoutPresentation
         let blockStyles: [LayoutBlockStyle]
+        let blockIDs: [String]
 
         var id: String { presentation.turnoutId }
     }
@@ -53,12 +122,16 @@ struct TopologyRenderPlan: Equatable, Sendable {
                 }
                 return blockStyles[block.id]
             }
+            let blockIDs = topology.blocks
+                .filter { $0.trackSectionIds.contains(section.id) }
+                .map(\.id)
 
             return Track(
                 id: section.id,
                 start: LayoutPoint(x: node.x, y: node.y),
                 segments: path.segments,
-                blockStyles: styles
+                blockStyles: styles,
+                blockIDs: blockIDs
             )
         }
         turnouts = presentation.turnouts.map { turnout in
@@ -69,7 +142,14 @@ struct TopologyRenderPlan: Equatable, Sendable {
                 }
                 return blockStyles[block.id]
             }
-            return Turnout(presentation: turnout, blockStyles: styles)
+            let blockIDs = topology.blocks
+                .filter { $0.turnoutIds?.contains(turnout.turnoutId) == true }
+                .map(\.id)
+            return Turnout(
+                presentation: turnout,
+                blockStyles: styles,
+                blockIDs: blockIDs
+            )
         }
         nodes = presentation.nodes
     }
@@ -81,6 +161,7 @@ struct TopologyRenderer: View {
     let mode: TopologyRendererMode
     let gridSpacing: Double
     let showsGrid: Bool
+    var runtime: TopologyRuntimeState = .empty
 
     var body: some View {
         Canvas(rendersAsynchronously: true) { context, size in
@@ -88,6 +169,7 @@ struct TopologyRenderer: View {
                 drawGrid(context: &context, size: size)
             }
             drawBlockOverlays(context: &context)
+            drawOccupancy(context: &context)
             drawTracks(context: &context)
             drawTurnouts(context: &context)
 
@@ -96,6 +178,35 @@ struct TopologyRenderer: View {
             }
         }
         .accessibilityLabel("Plan du réseau")
+    }
+
+    private func drawOccupancy(context: inout GraphicsContext) {
+        for track in plan.tracks {
+            switch runtime.occupancyEmphasis(for: track.blockIDs) {
+            case .occupied:
+                context.stroke(
+                    trackPath(track),
+                    with: .color(.red.opacity(0.9)),
+                    style: StrokeStyle(
+                        lineWidth: max(5, 9 * transform.zoom),
+                        lineCap: .round,
+                        lineJoin: .round
+                    )
+                )
+            case .unknown:
+                context.stroke(
+                    trackPath(track),
+                    with: .color(.yellow.opacity(0.8)),
+                    style: StrokeStyle(
+                        lineWidth: max(4, 7 * transform.zoom),
+                        lineCap: .round,
+                        dash: [6, 5]
+                    )
+                )
+            case .none:
+                break
+            }
+        }
     }
 
     private func drawGrid(context: inout GraphicsContext, size: CGSize) {
@@ -175,12 +286,30 @@ struct TopologyRenderer: View {
                     with: .color(Color(hex: style.color).opacity(style.opacity))
                 )
             }
-            context.fill(Path(ellipseIn: rect), with: .color(.orange))
+            context.fill(
+                Path(ellipseIn: rect),
+                with: .color(turnoutColor(id: turnout.id))
+            )
             context.stroke(
                 Path(ellipseIn: rect),
                 with: .color(.primary),
                 lineWidth: max(1, transform.zoom)
             )
+        }
+    }
+
+    private func turnoutColor(id: String) -> Color {
+        switch runtime.turnoutVisualState(for: id) {
+        case .unknown:
+            return .gray
+        case .confirmed:
+            return .green
+        case .transitioning:
+            return .yellow
+        case .inconsistent:
+            return .orange
+        case .failed:
+            return .red
         }
     }
 

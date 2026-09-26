@@ -208,18 +208,115 @@ struct TokenPair: Codable {
     let user: User
 }
 
-struct Block: Codable, Identifiable {
+enum BlockOccupancyState: String, Codable, Sendable {
+    case unknown
+    case free
+    case occupied
+}
+
+struct OccupantReference: Codable, Equatable, Sendable {
+    let type: String
+    let id: String
+}
+
+struct BlockOccupancy: Codable, Equatable, Sendable {
+    let state: BlockOccupancyState
+    let occupant: OccupantReference?
+    let updatedAt: Date
+}
+
+struct Block: Codable, Equatable, Identifiable, Sendable {
     let id: String
     let name: String
     var occupied: Bool
+    var occupancy: BlockOccupancy?
+
+    var occupancyState: BlockOccupancyState {
+        occupancy?.state ?? (occupied ? .occupied : .free)
+    }
 }
 
-struct Turnout: Codable, Identifiable {
+enum TurnoutReportedStatus: String, Codable, Sendable {
+    case known
+    case unknown
+    case invalid
+}
+
+enum TurnoutReportQuality: String, Codable, Sendable {
+    case assumed
+    case station
+    case physical
+}
+
+enum TurnoutCommandStatus: String, Codable, Sendable {
+    case idle
+    case pending
+    case succeeded
+    case failed
+    case timeout
+}
+
+struct Turnout: Codable, Equatable, Identifiable, Sendable {
     let id: String
     let name: String
-    let dccAddress: Int
-    var desiredState: String
-    var reportedState: String
+    let kind: TurnoutKind?
+    let endpoints: [AccessoryEndpoint]
+    let positions: [TurnoutPositionDefinition]
+    var desiredPosition: String
+    var reportedPosition: String
+    var pending: Bool
+    var reportedStatus: TurnoutReportedStatus
+    var reportQuality: TurnoutReportQuality?
+    var commandStatus: TurnoutCommandStatus
+    let dccAddress: Int?
+    var desiredState: String?
+    var reportedState: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, kind, endpoints, positions
+        case desiredPosition, reportedPosition, pending
+        case reportedStatus, reportQuality, commandStatus
+        case dccAddress, desiredState, reportedState
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        kind = try container.decodeIfPresent(TurnoutKind.self, forKey: .kind)
+        endpoints = try container.decodeIfPresent(
+            [AccessoryEndpoint].self,
+            forKey: .endpoints
+        ) ?? []
+        positions = try container.decodeIfPresent(
+            [TurnoutPositionDefinition].self,
+            forKey: .positions
+        ) ?? []
+        desiredState = try container.decodeIfPresent(String.self, forKey: .desiredState)
+        reportedState = try container.decodeIfPresent(String.self, forKey: .reportedState)
+        desiredPosition = try container.decodeIfPresent(
+            String.self,
+            forKey: .desiredPosition
+        ) ?? desiredState ?? ""
+        reportedPosition = try container.decodeIfPresent(
+            String.self,
+            forKey: .reportedPosition
+        ) ?? reportedState ?? ""
+        pending = try container.decodeIfPresent(Bool.self, forKey: .pending) ?? false
+        reportedStatus = try container.decodeIfPresent(
+            TurnoutReportedStatus.self,
+            forKey: .reportedStatus
+        ) ?? (reportedPosition.isEmpty ? .unknown : .known)
+        reportQuality = try container.decodeIfPresent(
+            TurnoutReportQuality.self,
+            forKey: .reportQuality
+        )
+        commandStatus = try container.decodeIfPresent(
+            TurnoutCommandStatus.self,
+            forKey: .commandStatus
+        ) ?? .idle
+        dccAddress = try container.decodeIfPresent(Int.self, forKey: .dccAddress)
+    }
 }
 
 struct Route: Codable, Identifiable {
@@ -408,6 +505,24 @@ struct ServerEvent {
 enum ServerMessage {
     case snapshot(SystemSnapshot)
     case event(ServerEvent)
+}
+
+struct BlockOccupancyChangedPayload: Decodable {
+    let blockId: String
+    let state: BlockOccupancyState
+    let occupant: OccupantReference?
+    let updatedAt: Date
+    let occupied: Bool
+}
+
+struct TurnoutStateChangedPayload: Decodable {
+    let turnoutId: String
+    let desiredPosition: String
+    let reportedPosition: String
+    let reportedStatus: TurnoutReportedStatus
+    let pending: Bool
+    let reportQuality: TurnoutReportQuality?
+    let commandStatus: TurnoutCommandStatus
 }
 
 struct StationStatusChangedPayload: Decodable {

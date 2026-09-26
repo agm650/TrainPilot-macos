@@ -63,6 +63,7 @@
 		C7AFB251306833290016FE77 /* LayoutPublicationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB250306833290016FE77 /* LayoutPublicationCoordinator.swift */; };
 		C7AFB253306833590016FE77 /* LayoutPublicationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */; };
 		C7AFB255306833960016FE77 /* LayoutArchiveSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */; };
+		C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -134,6 +135,7 @@
 		C7AFB250306833290016FE77 /* LayoutPublicationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutPublicationCoordinator.swift; sourceTree = "<group>"; };
 		C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutPublicationCoordinatorTests.swift; sourceTree = "<group>"; };
 		C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutArchiveSaver.swift; sourceTree = "<group>"; };
+		C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeLayoutTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -201,6 +203,7 @@
 				C7AFB248306831A80016FE77 /* LayoutTurnoutEditingTests.swift */,
 				C7AFB24C3068321B0016FE77 /* LayoutBlockEditingTests.swift */,
 				C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */,
+				C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -535,6 +538,7 @@
 				C7AFB253306833590016FE77 /* LayoutPublicationCoordinatorTests.swift in Sources */,
 				C7AFB245306830D10016FE77 /* LayoutTrackEditingTests.swift in Sources */,
 				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
+				C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

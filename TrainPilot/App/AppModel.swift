@@ -30,6 +30,8 @@ final class AppModel: ObservableObject {
     @Published var stationStatus: StationStatus = .unknown
     @Published var locomotives: [Locomotive] = []
     @Published var knownLeases: [ControlLease] = []
+    @Published private(set) var blocks: [Block] = []
+    @Published private(set) var turnouts: [Turnout] = []
     @Published var errorMessage: String?
     @Published var currentUser: User?
     @Published private(set) var layoutRepository: LayoutRepository?
@@ -535,6 +537,24 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func setTurnout(id: String, position: String) async {
+        guard stationStatus.connectivity == .online else {
+            errorMessage = "Impossible de commander l’aiguillage : la centrale est hors ligne."
+            return
+        }
+        guard systemInfo?.station.accessoryControl == true else {
+            errorMessage = "La centrale ne prend pas en charge la commande d’aiguillages."
+            return
+        }
+        guard let api else { return }
+
+        do {
+            try await api.setTurnout(id: id, position: position)
+        } catch {
+            presentError(error)
+        }
+    }
+
     func leaseForLocomotive(
         _ locomotiveID: String
     ) -> ControlLease? {
@@ -677,6 +697,13 @@ final class AppModel: ObservableObject {
                 restoreOwnSessions(from: leases)
             }
 
+            if let blocks = snapshot.payload.blocks {
+                self.blocks = blocks
+            }
+            if let turnouts = snapshot.payload.turnouts {
+                self.turnouts = turnouts
+            }
+
             if let topologyRevision = snapshot.payload.topologyRevision,
                let presentationRevision = snapshot.payload.layoutPresentationRevision {
                 do {
@@ -807,6 +834,32 @@ final class AppModel: ObservableObject {
             case "layout.imported":
                 // The following snapshot confirms authoritative revisions.
                 break
+
+            case "block.occupancy.changed":
+                let payload = try event.decodePayload(
+                    BlockOccupancyChangedPayload.self
+                )
+                if let index = blocks.firstIndex(where: { $0.id == payload.blockId }) {
+                    blocks[index].occupied = payload.occupied
+                    blocks[index].occupancy = BlockOccupancy(
+                        state: payload.state,
+                        occupant: payload.occupant,
+                        updatedAt: payload.updatedAt
+                    )
+                }
+
+            case "turnout.state.changed":
+                let payload = try event.decodePayload(
+                    TurnoutStateChangedPayload.self
+                )
+                if let index = turnouts.firstIndex(where: { $0.id == payload.turnoutId }) {
+                    turnouts[index].desiredPosition = payload.desiredPosition
+                    turnouts[index].reportedPosition = payload.reportedPosition
+                    turnouts[index].reportedStatus = payload.reportedStatus
+                    turnouts[index].pending = payload.pending
+                    turnouts[index].reportQuality = payload.reportQuality
+                    turnouts[index].commandStatus = payload.commandStatus
+                }
 
             default:
                 break
@@ -1029,6 +1082,8 @@ final class AppModel: ObservableObject {
         stationStatus = .unknown
         locomotives = []
         knownLeases = []
+        blocks = []
+        turnouts = []
         currentUser = nil
         currentSessionID = nil
 

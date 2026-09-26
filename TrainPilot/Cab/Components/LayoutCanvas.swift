@@ -4,6 +4,8 @@ struct LayoutCanvas: View {
     let topology: TopologyDefinition
     let presentation: LayoutPresentationDefinition
     let mode: TopologyRendererMode
+    var runtime: TopologyRuntimeState = .empty
+    var onTurnoutSelected: ((String) -> Void)?
 
     @AppStorage("layoutEditorShowsGrid") private var showsGrid = true
     @AppStorage("layoutEditorSnapToGrid") private var snapToGrid = true
@@ -22,16 +24,20 @@ struct LayoutCanvas: View {
                     transform: effectiveTransform(in: geometry.size),
                     mode: mode,
                     gridSpacing: presentation.gridSpacing,
-                    showsGrid: showsGrid
+                    showsGrid: showsGrid,
+                    runtime: runtime
                 )
                 .contentShape(Rectangle())
                 .gesture(panGesture)
                 .simultaneousGesture(magnificationGesture(in: geometry.size))
 
+                turnoutHitTargets(in: geometry.size)
+
                 LayoutCanvasControls(
                     zoom: transform.zoom,
                     showsGrid: $showsGrid,
                     snapToGrid: $snapToGrid,
+                    showsSnapControl: mode != .readOnly,
                     zoomOut: { setZoom(transform.zoom - 0.25, in: geometry.size) },
                     resetZoom: { setZoom(1, in: geometry.size) },
                     zoomIn: { setZoom(transform.zoom + 0.25, in: geometry.size) }
@@ -39,6 +45,30 @@ struct LayoutCanvas: View {
                 .padding(12)
             }
             .background(Color.black.opacity(0.12))
+        }
+    }
+
+    @ViewBuilder
+    private func turnoutHitTargets(in size: CGSize) -> some View {
+        if mode == .readOnly, let onTurnoutSelected {
+            let viewport = effectiveTransform(in: size)
+            ForEach(presentation.turnouts, id: \.turnoutId) { turnout in
+                Button {
+                    onTurnoutSelected(turnout.turnoutId)
+                } label: {
+                    Circle()
+                        .fill(Color.clear)
+                        .contentShape(Circle())
+                        .frame(width: 30, height: 30)
+                }
+                .buttonStyle(.plain)
+                .position(
+                    viewport.canvasPoint(
+                        for: LayoutPoint(x: turnout.x, y: turnout.y)
+                    )
+                )
+                .accessibilityLabel("Aiguillage \(turnout.turnoutId)")
+            }
         }
     }
 
@@ -86,6 +116,7 @@ private struct LayoutCanvasControls: View {
     let zoom: Double
     @Binding var showsGrid: Bool
     @Binding var snapToGrid: Bool
+    let showsSnapControl: Bool
     let zoomOut: () -> Void
     let resetZoom: () -> Void
     let zoomIn: () -> Void
@@ -99,12 +130,14 @@ private struct LayoutCanvasControls: View {
             .help("Afficher ou masquer la grille")
             .accessibilityLabel("Afficher la grille")
 
-            Toggle(isOn: $snapToGrid) {
-                Image(systemName: "dot.squareshape.split.2x2")
+            if showsSnapControl {
+                Toggle(isOn: $snapToGrid) {
+                    Image(systemName: "dot.squareshape.split.2x2")
+                }
+                .toggleStyle(.button)
+                .help("Activer ou désactiver l’alignement sur la grille")
+                .accessibilityLabel("Alignement sur la grille")
             }
-            .toggleStyle(.button)
-            .help("Activer ou désactiver l’alignement sur la grille")
-            .accessibilityLabel("Alignement sur la grille")
 
             Button(action: zoomOut) {
                 Image(systemName: "minus.magnifyingglass")

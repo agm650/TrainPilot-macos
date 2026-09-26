@@ -258,6 +258,35 @@ actor APIClient: LayoutDataSource {
         )
     }
 
+    func listBlocks() async throws -> [Block] {
+        let response: ItemsResponse<Block> = try await request(
+            path: "/api/v1/blocks",
+            method: "GET",
+            expected: [200],
+            as: ItemsResponse<Block>.self
+        )
+        return response.items
+    }
+
+    func listTurnouts() async throws -> [Turnout] {
+        let response: ItemsResponse<Turnout> = try await request(
+            path: "/api/v1/turnouts",
+            method: "GET",
+            expected: [200],
+            as: ItemsResponse<Turnout>.self
+        )
+        return response.items
+    }
+
+    func setTurnout(id: String, position: String) async throws {
+        try await requestNoContent(
+            path: "/api/v1/turnouts/\(urlComponent(id))",
+            method: "PUT",
+            body: ["position": position],
+            expected: [204]
+        )
+    }
+
     func stationStatus() async throws -> StationStatus {
         try await request(
             path: "/api/v1/station/status",
