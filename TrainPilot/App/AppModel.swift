@@ -584,6 +584,11 @@ final class AppModel: ObservableObject {
     }
 
     func setTurnout(id: String, position: String) async {
+        guard connectionState == .ready,
+              layoutRepository?.availability == .ready else {
+            errorMessage = "Impossible de commander l’aiguillage : serveur hors ligne."
+            return
+        }
         guard stationStatus.connectivity == .online else {
             errorMessage = "Impossible de commander l’aiguillage : la centrale est hors ligne."
             return
@@ -677,6 +682,7 @@ final class AppModel: ObservableObject {
             while !Task.isCancelled,
                   !self.isLoggingOut {
                 self.connectionState = .reconnecting
+                self.layoutRepository?.markStale()
 
                 let seconds = delays[
                     min(attempt, delays.count - 1)

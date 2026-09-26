@@ -45,7 +45,9 @@ struct NetworkViewport: View {
     }
 
     private var canCommandTurnouts: Bool {
-        model.stationStatus.connectivity == .online &&
+        model.connectionState == .ready &&
+            model.layoutRepository?.availability == .ready &&
+            model.stationStatus.connectivity == .online &&
             model.systemInfo?.station.accessoryControl == true
     }
 
@@ -69,6 +71,10 @@ struct NetworkViewport: View {
                 .fontWeight(.bold)
             Text("• lecture seule")
                 .foregroundColor(.secondary)
+            if model.layoutRepository?.availability == .stale {
+                Label("données anciennes", systemImage: "exclamationmark.triangle")
+                    .foregroundColor(.orange)
+            }
         }
         .font(.caption)
         .foregroundColor(SNCFPalette.gauge)
@@ -155,6 +161,10 @@ struct NetworkViewport: View {
     }
 
     private var commandUnavailableReason: String {
+        if model.connectionState != .ready ||
+            model.layoutRepository?.availability != .ready {
+            return "Commande indisponible : serveur hors ligne"
+        }
         if model.stationStatus.connectivity != .online {
             return "Commande indisponible : centrale hors ligne"
         }

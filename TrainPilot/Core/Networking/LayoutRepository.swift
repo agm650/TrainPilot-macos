@@ -66,6 +66,10 @@ final class LayoutRepository: ObservableObject {
         }
     }
 
+    func markStale() {
+        availability = snapshot == nil ? .unavailable : .stale
+    }
+
     func refreshIfNeeded(
         topologyRevision: String,
         presentationRevision: String

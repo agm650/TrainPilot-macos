@@ -165,6 +165,16 @@ final class LayoutRepositoryTests: XCTestCase {
         XCTAssertEqual(counts.presentation, 1)
     }
 
+    func testMarkStaleRetainsLastPublishedSnapshot() async throws {
+        let (repository, _) = try await makeLoadedRepository()
+        let publishedSnapshot = repository.snapshot
+
+        repository.markStale()
+
+        XCTAssertEqual(repository.availability, .stale)
+        XCTAssertEqual(repository.snapshot, publishedSnapshot)
+    }
+
     private func makeLoadedRepository() async throws -> (
         LayoutRepository,
         LayoutDataSourceSpy
