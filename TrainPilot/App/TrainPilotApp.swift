@@ -11,6 +11,14 @@ struct TrainPilotApp: App {
                 .frame(minWidth: 1024, minHeight: 768)
         }
         .commands {
+            CommandGroup(replacing: .saveItem) {
+                Button("Enregistrer le brouillon") {
+                    Task { await appModel.saveLayoutDraft() }
+                }
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(appModel.layoutEditorDocument == nil)
+            }
+
             CommandMenu("TrainPilot") {
                 Button("Bibliothèque…") {
                     WindowCoordinator.shared.showLibrary(appModel: appModel)

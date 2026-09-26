@@ -33,11 +33,14 @@ final class AppModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var currentUser: User?
     @Published private(set) var layoutRepository: LayoutRepository?
+    @Published private(set) var layoutEditorDocument: LayoutEditorDocument?
+    @Published private(set) var layoutDraftConflict: LayoutDraftConflict?
 
     let preferences: AppPreferences
     let driving = DrivingSessionManager()
 
     private let keychain = KeychainStore()
+    private let layoutDraftStore: any LayoutDraftStoring
     private var api: APIClient?
     private var eventClient: EventClient?
     private var eventTask: Task<Void, Never>?
@@ -49,8 +52,12 @@ final class AppModel: ObservableObject {
     private var isLoggingOut = false
     private var restoreAttempted = false
 
-    init(preferences: AppPreferences = AppPreferences()) {
+    init(
+        preferences: AppPreferences = AppPreferences(),
+        layoutDraftStore: any LayoutDraftStoring = LayoutDraftStore()
+    ) {
         self.preferences = preferences
+        self.layoutDraftStore = layoutDraftStore
     }
 
     var isAdministrator: Bool {
@@ -138,6 +145,8 @@ final class AppModel: ObservableObject {
         reconnectTask?.cancel()
         eventTask?.cancel()
 
+        try? await layoutEditorDocument?.saveNow()
+
         for session in driving.sortedSessions {
             try? await api?.release(leaseID: session.lease.id)
         }
@@ -152,6 +161,94 @@ final class AppModel: ObservableObject {
         clearRuntimeState()
         connectionState = .disconnected
         isLoggingOut = false
+    }
+
+    // MARK: - Layout editor draft
+
+    func openLayoutEditorDocument() async {
+        guard isAdministrator else {
+            presentError(LayoutEditorError.administratorRequired)
+            return
+        }
+
+        guard let snapshot = layoutRepository?.snapshot,
+              let serverIdentity = normalizedServerURL()?.absoluteString else {
+            presentError(LayoutEditorError.serverLayoutUnavailable)
+            return
+        }
+
+        do {
+            let result = try await LayoutEditorDocument.open(
+                serverIdentity: serverIdentity,
+                serverSnapshot: snapshot,
+                draftStore: layoutDraftStore
+            )
+
+            switch result {
+            case .created(let document), .resumed(let document):
+                layoutEditorDocument = document
+                layoutDraftConflict = nil
+            case .conflict(let conflict):
+                layoutDraftConflict = conflict
+            }
+        } catch {
+            presentError(error)
+        }
+    }
+
+    func resolveLayoutDraftConflict(
+        _ resolution: LayoutDraftConflictResolution
+    ) async {
+        guard let conflict = layoutDraftConflict else { return }
+
+        do {
+            layoutEditorDocument = try await LayoutEditorDocument.resolve(
+                conflict,
+                resolution: resolution,
+                draftStore: layoutDraftStore
+            )
+            layoutDraftConflict = nil
+        } catch {
+            presentError(error)
+        }
+    }
+
+    func saveLayoutDraft() async {
+        do {
+            try await layoutEditorDocument?.saveNow()
+        } catch {
+            presentError(error)
+        }
+    }
+
+    func reloadLayoutEditorFromServer(
+        discardingChanges: Bool
+    ) async throws {
+        guard let current = layoutEditorDocument,
+              let snapshot = layoutRepository?.snapshot else {
+            throw LayoutEditorError.serverLayoutUnavailable
+        }
+
+        if current.isDirty && !discardingChanges {
+            throw LayoutEditorError.discardConfirmationRequired
+        }
+
+        try await current.discardLocalDraft()
+        layoutEditorDocument = LayoutEditorDocument(
+            serverIdentity: current.serverIdentity,
+            snapshot: snapshot,
+            draftStore: layoutDraftStore
+        )
+    }
+
+    func layoutPublicationSucceeded() async {
+        do {
+            try await layoutEditorDocument?.discardLocalDraft()
+            layoutEditorDocument = nil
+            layoutDraftConflict = nil
+        } catch {
+            presentError(error)
+        }
     }
 
     // MARK: - Rolling stock library
@@ -582,10 +679,18 @@ final class AppModel: ObservableObject {
 
             if let topologyRevision = snapshot.payload.topologyRevision,
                let presentationRevision = snapshot.payload.layoutPresentationRevision {
-                try? await layoutRepository?.refreshIfNeeded(
-                    topologyRevision: topologyRevision,
-                    presentationRevision: presentationRevision
-                )
+                do {
+                    try await layoutRepository?.refreshIfNeeded(
+                        topologyRevision: topologyRevision,
+                        presentationRevision: presentationRevision
+                    )
+                    layoutEditorDocument?.updateServerRevisions(
+                        topologyRevision: topologyRevision,
+                        presentationRevision: presentationRevision
+                    )
+                } catch {
+                    layoutEditorDocument?.markServerUnavailable()
+                }
             }
 
         case .event(let event):
@@ -917,6 +1022,8 @@ final class AppModel: ObservableObject {
         eventClient = nil
         api = nil
         layoutRepository = nil
+        layoutEditorDocument = nil
+        layoutDraftConflict = nil
 
         systemInfo = nil
         stationStatus = .unknown

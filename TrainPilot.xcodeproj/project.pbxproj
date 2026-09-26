@@ -42,6 +42,10 @@
 		C7AFB22630682BAC0016FE77 /* LayoutRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */; };
 		C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */; };
 		C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22930682BAD0016FE77 /* LayoutRepositoryTests.swift */; };
+		C7AFB22C30682DF40016FE77 /* LayoutDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22B30682DF40016FE77 /* LayoutDraftStore.swift */; };
+		C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22E30682DF40016FE77 /* LayoutDraftStoreTests.swift */; };
+		C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23030682DF50016FE77 /* LayoutEditorDocumentTests.swift */; };
+		C7AFB23330682DFB0016FE77 /* LayoutEditorDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23230682DFB0016FE77 /* LayoutEditorDocument.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +96,10 @@
 		C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutRepository.swift; sourceTree = "<group>"; };
 		C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutModelsTests.swift; sourceTree = "<group>"; };
 		C7AFB22930682BAD0016FE77 /* LayoutRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutRepositoryTests.swift; sourceTree = "<group>"; };
+		C7AFB22B30682DF40016FE77 /* LayoutDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutDraftStore.swift; sourceTree = "<group>"; };
+		C7AFB22E30682DF40016FE77 /* LayoutDraftStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutDraftStoreTests.swift; sourceTree = "<group>"; };
+		C7AFB23030682DF50016FE77 /* LayoutEditorDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutEditorDocumentTests.swift; sourceTree = "<group>"; };
+		C7AFB23230682DFB0016FE77 /* LayoutEditorDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutEditorDocument.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -150,6 +158,8 @@
 				00000000000000000000004D /* ThrottleWheelMathTests.swift */,
 				C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */,
 				C7AFB22930682BAD0016FE77 /* LayoutRepositoryTests.swift */,
+				C7AFB22E30682DF40016FE77 /* LayoutDraftStoreTests.swift */,
+				C7AFB23030682DF50016FE77 /* LayoutEditorDocumentTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -237,6 +247,7 @@
 			isa = PBXGroup;
 			children = (
 				C723747D304ED0620054808A /* AppPreferences.swift */,
+				C7AFB22B30682DF40016FE77 /* LayoutDraftStore.swift */,
 			);
 			path = Preferences;
 			sourceTree = "<group>";
@@ -292,6 +303,8 @@
 				C7237485304ED0620054808A /* Library */,
 				C7237487304ED0620054808A /* Login */,
 				C7237489304ED0620054808A /* Preferences */,
+				C7AFB22D30682DF40016FE77 /* LayoutEditor 2 */,
+				C7AFB23230682DFB0016FE77 /* LayoutEditorDocument.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -302,6 +315,13 @@
 				C723748B304ED0620054808A /* PreviewData.swift */,
 			);
 			path = Preview;
+			sourceTree = "<group>";
+		};
+		C7AFB22D30682DF40016FE77 /* LayoutEditor 2 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "LayoutEditor 2";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -427,8 +447,10 @@
 				C723749D304ED0620054808A /* DirectionSelector.swift in Sources */,
 				C723749E304ED0620054808A /* WindowCoordinator.swift in Sources */,
 				C723749F304ED0620054808A /* SequenceTracker.swift in Sources */,
+				C7AFB23330682DFB0016FE77 /* LayoutEditorDocument.swift in Sources */,
 				C72374A0304ED0620054808A /* PreferencesView.swift in Sources */,
 				C72374A1304ED0620054808A /* Models.swift in Sources */,
+				C7AFB22C30682DF40016FE77 /* LayoutDraftStore.swift in Sources */,
 				C72374A2304ED0620054808A /* AppPreferences.swift in Sources */,
 				C72374A3304ED0620054808A /* SNCFPalette.swift in Sources */,
 			);
@@ -442,7 +464,9 @@
 				00000000000000000000004C /* SequenceTrackerTests.swift in Sources */,
 				C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */,
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,
+				C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */,
 				C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */,
+				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
