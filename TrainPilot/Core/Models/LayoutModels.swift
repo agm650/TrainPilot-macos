@@ -143,6 +143,39 @@ struct LayoutBlockStyle: Codable, Equatable, Sendable {
     let opacity: Double
 }
 
+enum TurnoutKind: String, Codable, CaseIterable, Sendable {
+    case simple
+    case threeWay = "three_way"
+    case doubleSlip = "double_slip"
+    case singleSlip = "single_slip"
+    case custom
+}
+
+enum AccessoryPosition: String, Codable, Sendable {
+    case position1
+    case position2
+}
+
+struct AccessoryEndpoint: Codable, Equatable, Sendable, Identifiable {
+    let id: String
+    let linearAddress: Int
+    let inverted: Bool
+}
+
+struct TurnoutPositionDefinition: Codable, Equatable, Sendable, Identifiable {
+    let id: String
+    let label: String?
+    let endpoints: [String: AccessoryPosition]
+}
+
+struct TurnoutDefinition: Codable, Equatable, Sendable, Identifiable {
+    let id: String
+    let name: String
+    let kind: TurnoutKind
+    let endpoints: [AccessoryEndpoint]
+    let positions: [TurnoutPositionDefinition]
+}
+
 struct LayoutValidationResult: Codable, Equatable, Sendable {
     let valid: Bool
     let errors: [LayoutValidationDiagnostic]

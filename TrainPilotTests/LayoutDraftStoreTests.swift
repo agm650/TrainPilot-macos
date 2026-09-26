@@ -111,7 +111,8 @@ func makeDraft(serverIdentity: String) -> LayoutDraft {
         basePresentationRevision: "presentation-1",
         savedAt: Date(timeIntervalSince1970: 1_000),
         topology: makeEditorSnapshot().topology,
-        presentation: makeEditorSnapshot().presentation
+        presentation: makeEditorSnapshot().presentation,
+        turnouts: nil
     )
 }
 

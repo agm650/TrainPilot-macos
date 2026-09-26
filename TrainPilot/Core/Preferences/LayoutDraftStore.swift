@@ -11,6 +11,7 @@ struct LayoutDraft: Codable, Equatable, Sendable {
     let savedAt: Date
     let topology: TopologyDefinition
     let presentation: LayoutPresentationDefinition
+    let turnouts: [TurnoutDefinition]?
 }
 
 enum LayoutDraftStoreError: Error, Equatable {

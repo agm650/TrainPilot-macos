@@ -41,8 +41,13 @@ enum LayoutEditError: LocalizedError, Equatable {
 }
 
 private struct LayoutEditCommand {
-    let before: LayoutSnapshot
-    let after: LayoutSnapshot
+    let before: LayoutEditorState
+    let after: LayoutEditorState
+}
+
+struct LayoutEditorState: Equatable, Sendable {
+    let snapshot: LayoutSnapshot
+    let turnoutDefinitions: [TurnoutDefinition]
 }
 
 @MainActor
@@ -55,7 +60,7 @@ final class LayoutEditorController: ObservableObject {
 
     private var undoStack: [LayoutEditCommand] = []
     private var redoStack: [LayoutEditCommand] = []
-    private var dragStartSnapshot: LayoutSnapshot?
+    private var dragStartSnapshot: LayoutEditorState?
 
     init(document: LayoutEditorDocument) {
         self.document = document
@@ -78,7 +83,7 @@ final class LayoutEditorController: ObservableObject {
 
     func beginDrag() {
         guard dragStartSnapshot == nil else { return }
-        dragStartSnapshot = currentSnapshot
+        dragStartSnapshot = currentState
     }
 
     func moveSelection(
@@ -108,24 +113,27 @@ final class LayoutEditorController: ObservableObject {
     func endDrag() {
         guard let before = dragStartSnapshot else { return }
         dragStartSnapshot = nil
-        record(before: before, after: currentSnapshot)
+        record(before: before, after: currentState)
     }
 
     func cancelDrag() {
         guard let before = dragStartSnapshot else { return }
         dragStartSnapshot = nil
-        document.replaceSnapshot(before)
+        document.replaceEditingState(
+            snapshot: before.snapshot,
+            turnoutDefinitions: before.turnoutDefinitions
+        )
     }
 
     func performMutation(_ mutation: () throws -> Void) rethrows {
-        let before = currentSnapshot
+        let before = currentState
         try mutation()
-        record(before: before, after: currentSnapshot)
+        record(before: before, after: currentState)
     }
 
     func deleteSelection() throws {
         guard let selection else { return }
-        let before = currentSnapshot
+        let before = currentState
 
         switch selection {
         case .trackSection(let id):
@@ -139,31 +147,40 @@ final class LayoutEditorController: ObservableObject {
         }
 
         select(nil)
-        record(before: before, after: currentSnapshot)
+        record(before: before, after: currentState)
     }
 
     func undo() {
         guard let command = undoStack.popLast() else { return }
         redoStack.append(command)
-        document.replaceSnapshot(command.before)
+        document.replaceEditingState(
+            snapshot: command.before.snapshot,
+            turnoutDefinitions: command.before.turnoutDefinitions
+        )
         validateSelection()
     }
 
     func redo() {
         guard let command = redoStack.popLast() else { return }
         undoStack.append(command)
-        document.replaceSnapshot(command.after)
+        document.replaceEditingState(
+            snapshot: command.after.snapshot,
+            turnoutDefinitions: command.after.turnoutDefinitions
+        )
         validateSelection()
     }
 
-    private var currentSnapshot: LayoutSnapshot {
-        LayoutSnapshot(
-            topology: document.topology,
-            presentation: document.presentation
+    private var currentState: LayoutEditorState {
+        LayoutEditorState(
+            snapshot: LayoutSnapshot(
+                topology: document.topology,
+                presentation: document.presentation
+            ),
+            turnoutDefinitions: document.turnoutDefinitions
         )
     }
 
-    private func record(before: LayoutSnapshot, after: LayoutSnapshot) {
+    private func record(before: LayoutEditorState, after: LayoutEditorState) {
         guard before != after else { return }
         undoStack.append(LayoutEditCommand(before: before, after: after))
         redoStack.removeAll()
@@ -250,8 +267,8 @@ final class LayoutEditorController: ObservableObject {
         guard document.topology.turnoutTopologies.contains(where: { $0.turnoutId == id }) else {
             throw LayoutEditError.missingResource(id)
         }
-        document.replaceSnapshot(
-            LayoutSnapshot(
+        document.replaceEditingState(
+            snapshot: LayoutSnapshot(
                 topology: document.topology.replacing(
                     turnoutTopologies: document.topology.turnoutTopologies.filter {
                         $0.turnoutId != id
@@ -260,7 +277,8 @@ final class LayoutEditorController: ObservableObject {
                 presentation: document.presentation.replacing(
                     turnouts: document.presentation.turnouts.filter { $0.turnoutId != id }
                 )
-            )
+            ),
+            turnoutDefinitions: document.turnoutDefinitions.filter { $0.id != id }
         )
     }
 

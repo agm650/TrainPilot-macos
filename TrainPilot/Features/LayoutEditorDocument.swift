@@ -52,6 +52,7 @@ enum LayoutEditorError: LocalizedError, Equatable {
 final class LayoutEditorDocument: ObservableObject {
     @Published private(set) var topology: TopologyDefinition
     @Published private(set) var presentation: LayoutPresentationDefinition
+    @Published private(set) var turnoutDefinitions: [TurnoutDefinition]
     @Published private(set) var isDirty: Bool
     @Published private(set) var lastLocalSaveDate: Date?
     @Published private(set) var serverState: LayoutEditorServerState
@@ -66,16 +67,19 @@ final class LayoutEditorDocument: ObservableObject {
     private var autosaveTask: Task<Void, Never>?
     private var savedTopology: TopologyDefinition
     private var savedPresentation: LayoutPresentationDefinition
+    private var savedTurnoutDefinitions: [TurnoutDefinition]
 
     init(
         serverIdentity: String,
         snapshot: LayoutSnapshot,
         draftStore: any LayoutDraftStoring,
+        turnoutDefinitions: [TurnoutDefinition] = [],
         autosaveDelayNanoseconds: UInt64 = 1_000_000_000
     ) {
         self.serverIdentity = serverIdentity
         self.topology = snapshot.topology
         self.presentation = snapshot.presentation
+        self.turnoutDefinitions = turnoutDefinitions
         self.baseTopologyRevision = snapshot.topology.revision
         self.basePresentationRevision = snapshot.presentation.revision
         self.draftStore = draftStore
@@ -84,6 +88,7 @@ final class LayoutEditorDocument: ObservableObject {
         self.serverState = .matchesBase
         self.savedTopology = snapshot.topology
         self.savedPresentation = snapshot.presentation
+        self.savedTurnoutDefinitions = turnoutDefinitions
     }
 
     init(
@@ -94,6 +99,7 @@ final class LayoutEditorDocument: ObservableObject {
         self.serverIdentity = draft.serverIdentity
         self.topology = draft.topology
         self.presentation = draft.presentation
+        self.turnoutDefinitions = draft.turnouts ?? []
         self.baseTopologyRevision = draft.baseTopologyRevision
         self.basePresentationRevision = draft.basePresentationRevision
         self.draftStore = draftStore
@@ -103,6 +109,7 @@ final class LayoutEditorDocument: ObservableObject {
         self.serverState = .matchesBase
         self.savedTopology = draft.topology
         self.savedPresentation = draft.presentation
+        self.savedTurnoutDefinitions = draft.turnouts ?? []
     }
 
     deinit {
@@ -204,6 +211,21 @@ final class LayoutEditorDocument: ObservableObject {
         didMutate()
     }
 
+    func replaceTurnoutDefinitions(_ definitions: [TurnoutDefinition]) {
+        turnoutDefinitions = definitions
+        didMutate()
+    }
+
+    func replaceEditingState(
+        snapshot: LayoutSnapshot,
+        turnoutDefinitions: [TurnoutDefinition]
+    ) {
+        topology = snapshot.topology
+        presentation = snapshot.presentation
+        self.turnoutDefinitions = turnoutDefinitions
+        didMutate()
+    }
+
     func updateServerRevisions(
         topologyRevision: String,
         presentationRevision: String
@@ -239,6 +261,7 @@ final class LayoutEditorDocument: ObservableObject {
         lastLocalSaveDate = savedAt
         savedTopology = topology
         savedPresentation = presentation
+        savedTurnoutDefinitions = turnoutDefinitions
         isDirty = false
     }
 
@@ -255,7 +278,9 @@ final class LayoutEditorDocument: ObservableObject {
     }
 
     private func didMutate() {
-        isDirty = topology != savedTopology || presentation != savedPresentation
+        isDirty = topology != savedTopology ||
+            presentation != savedPresentation ||
+            turnoutDefinitions != savedTurnoutDefinitions
         validationState = .notValidated
         if isDirty {
             scheduleAutosave()
@@ -292,7 +317,8 @@ final class LayoutEditorDocument: ObservableObject {
             basePresentationRevision: basePresentationRevision,
             savedAt: savedAt,
             topology: topology,
-            presentation: presentation
+            presentation: presentation,
+            turnouts: turnoutDefinitions
         )
     }
 }
