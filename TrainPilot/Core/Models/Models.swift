@@ -276,6 +276,8 @@ struct SnapshotPayload: Decodable {
     let blocks: [Block]?
     let turnouts: [Turnout]?
     let routes: [Route]?
+    let topologyRevision: String?
+    let layoutPresentationRevision: String?
 
     private struct StationContainer: Decodable {
         let capabilities: Capabilities?
@@ -295,6 +297,8 @@ struct SnapshotPayload: Decodable {
         case blocks
         case turnouts
         case routes
+        case topologyRevision
+        case layoutPresentationRevision
     }
 
     init(from decoder: Decoder) throws {
@@ -325,6 +329,14 @@ struct SnapshotPayload: Decodable {
 
         capabilities = resolvedCapabilities
         stationStatus = resolvedStatus
+        topologyRevision = try container.decodeIfPresent(
+            String.self,
+            forKey: .topologyRevision
+        )
+        layoutPresentationRevision = try container.decodeIfPresent(
+            String.self,
+            forKey: .layoutPresentationRevision
+        )
 
         locomotives = SnapshotPayload.decodeArray(
             Locomotive.self,

@@ -26,7 +26,7 @@ enum APIError: LocalizedError {
     }
 }
 
-actor APIClient {
+actor APIClient: LayoutDataSource {
     static let clientAPIVersion = "1.4.0"
 
     private var baseURL: URL
@@ -186,6 +186,75 @@ actor APIClient {
         return RollingStockExport(
             data: data,
             suggestedFilename: filename
+        )
+    }
+
+    func topology() async throws -> TopologyDefinition {
+        try await request(
+            path: "/api/v1/topology",
+            method: "GET",
+            expected: [200],
+            as: TopologyDefinition.self
+        )
+    }
+
+    func layoutPresentation() async throws -> LayoutPresentationDefinition {
+        try await request(
+            path: "/api/v1/layout/presentation",
+            method: "GET",
+            expected: [200],
+            as: LayoutPresentationDefinition.self
+        )
+    }
+
+    func exportLayout() async throws -> LayoutArchive {
+        let (data, response) = try await performWithResponse(
+            path: "/api/v1/layout/export",
+            method: "GET",
+            bodyData: nil,
+            authorized: true,
+            expected: [200],
+            allowRefresh: true,
+            accept: "application/vnd.dcc-control.package+zip"
+        )
+
+        let filename = suggestedFilename(
+            from: response.value(
+                forHTTPHeaderField: "Content-Disposition"
+            )
+        ) ?? "TrainPilot-layout.zip"
+
+        return LayoutArchive(data: data, suggestedFilename: filename)
+    }
+
+    func validateLayout(
+        archive: Data,
+        mode: LayoutImportMode
+    ) async throws -> LayoutValidationResult {
+        try await request(
+            path: "/api/v1/layout/validate?mode=\(mode.rawValue)",
+            method: "POST",
+            bodyData: archive,
+            authorized: true,
+            expected: [200],
+            allowRefresh: true,
+            contentType: "application/vnd.dcc-control.package+zip",
+            as: LayoutValidationResult.self
+        )
+    }
+
+    func importLayout(
+        archive: Data,
+        mode: LayoutImportMode
+    ) async throws {
+        _ = try await perform(
+            path: "/api/v1/layout/import?mode=\(mode.rawValue)",
+            method: "POST",
+            bodyData: archive,
+            authorized: true,
+            expected: [204],
+            allowRefresh: true,
+            contentType: "application/vnd.dcc-control.package+zip"
         )
     }
 
@@ -380,6 +449,7 @@ actor APIClient {
         authorized: Bool,
         expected: Set<Int>,
         allowRefresh: Bool,
+        contentType: String = "application/json",
         as type: T.Type
     ) async throws -> T {
         let data = try await perform(
@@ -388,7 +458,8 @@ actor APIClient {
             bodyData: bodyData,
             authorized: authorized,
             expected: expected,
-            allowRefresh: allowRefresh
+            allowRefresh: allowRefresh,
+            contentType: contentType
         )
 
         return try JSONDecoder.trainPilot.decode(T.self, from: data)
@@ -436,7 +507,8 @@ actor APIClient {
         authorized: Bool,
         expected: Set<Int>,
         allowRefresh: Bool,
-        accept: String = "application/json"
+        accept: String = "application/json",
+        contentType: String = "application/json"
     ) async throws -> Data {
         let (data, _) = try await performWithResponse(
             path: path,
@@ -445,7 +517,8 @@ actor APIClient {
             authorized: authorized,
             expected: expected,
             allowRefresh: allowRefresh,
-            accept: accept
+            accept: accept,
+            contentType: contentType
         )
 
         return data
@@ -458,7 +531,8 @@ actor APIClient {
         authorized: Bool,
         expected: Set<Int>,
         allowRefresh: Bool,
-        accept: String = "application/json"
+        accept: String = "application/json",
+        contentType: String = "application/json"
     ) async throws -> (Data, HTTPURLResponse) {
         if authorized {
             try await ensureFreshAccessToken()
@@ -468,7 +542,8 @@ actor APIClient {
             path: path,
             method: method,
             bodyData: bodyData,
-            accept: accept
+            accept: accept,
+            contentType: contentType
         )
 
         if authorized,
@@ -501,7 +576,8 @@ actor APIClient {
                 authorized: authorized,
                 expected: expected,
                 allowRefresh: false,
-                accept: accept
+                accept: accept,
+                contentType: contentType
             )
         }
 
@@ -523,7 +599,8 @@ actor APIClient {
         path: String,
         method: String,
         bodyData: Data?,
-        accept: String
+        accept: String,
+        contentType: String
     ) throws -> URLRequest {
         guard let url = URL(
             string: path,
@@ -543,7 +620,7 @@ actor APIClient {
         if let bodyData {
             request.httpBody = bodyData
             request.setValue(
-                "application/json",
+                contentType,
                 forHTTPHeaderField: "Content-Type"
             )
         }

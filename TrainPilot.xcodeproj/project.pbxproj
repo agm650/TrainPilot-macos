@@ -38,8 +38,10 @@
 		C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72374A7304ED0B50054808A /* NetworkViewport.swift */; };
 		C72374AA304F6C260054808A /* TrainPilotCab.icns in Resources */ = {isa = PBXBuildFile; fileRef = C72374A9304F6C260054808A /* TrainPilotCab.icns */; };
 		C72374AE304F6E030054808A /* Asset.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C72374AD304F6E030054808A /* Asset.xcassets */; };
-		C7C50E2E30446EF7007036B2 /* AGENTS.md in Sources */ = {isa = PBXBuildFile; fileRef = C7C50E2D30446EF1007036B2 /* AGENTS.md */; };
-		C7C50E3030446F2E007036B2 /* RTK.md in Sources */ = {isa = PBXBuildFile; fileRef = C7C50E2F30446F29007036B2 /* RTK.md */; };
+		C7AFB22430682BAC0016FE77 /* LayoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22330682BAC0016FE77 /* LayoutModels.swift */; };
+		C7AFB22630682BAC0016FE77 /* LayoutRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */; };
+		C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */; };
+		C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22930682BAD0016FE77 /* LayoutRepositoryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +88,10 @@
 		C72374A7304ED0B50054808A /* NetworkViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkViewport.swift; sourceTree = "<group>"; };
 		C72374A9304F6C260054808A /* TrainPilotCab.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = TrainPilotCab.icns; sourceTree = "<group>"; };
 		C72374AD304F6E030054808A /* Asset.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Asset.xcassets; sourceTree = "<group>"; };
+		C7AFB22330682BAC0016FE77 /* LayoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutModels.swift; sourceTree = "<group>"; };
+		C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutRepository.swift; sourceTree = "<group>"; };
+		C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutModelsTests.swift; sourceTree = "<group>"; };
+		C7AFB22930682BAD0016FE77 /* LayoutRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutRepositoryTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -142,6 +148,8 @@
 				000000000000000000000049 /* SemanticVersionTests.swift */,
 				00000000000000000000004B /* SequenceTrackerTests.swift */,
 				00000000000000000000004D /* ThrottleWheelMathTests.swift */,
+				C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */,
+				C7AFB22930682BAD0016FE77 /* LayoutRepositoryTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -209,6 +217,7 @@
 			isa = PBXGroup;
 			children = (
 				C7237477304ED0620054808A /* Models.swift */,
+				C7AFB22330682BAC0016FE77 /* LayoutModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -219,6 +228,7 @@
 				C7237479304ED0620054808A /* APIClient.swift */,
 				C723747A304ED0620054808A /* EventClient.swift */,
 				C723747B304ED0620054808A /* SequenceTracker.swift */,
+				C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -395,6 +405,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C723748D304ED0620054808A /* SpeedGauge.swift in Sources */,
+				C7AFB22630682BAC0016FE77 /* LayoutRepository.swift in Sources */,
+				C7AFB22430682BAC0016FE77 /* LayoutModels.swift in Sources */,
 				C723748E304ED0620054808A /* AppModel.swift in Sources */,
 				C723748F304ED0620054808A /* DrivingSessionManager.swift in Sources */,
 				C7237490304ED0620054808A /* EventClient.swift in Sources */,
@@ -426,11 +438,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C7C50E3030446F2E007036B2 /* RTK.md in Sources */,
 				00000000000000000000004A /* SemanticVersionTests.swift in Sources */,
 				00000000000000000000004C /* SequenceTrackerTests.swift in Sources */,
-				C7C50E2E30446EF7007036B2 /* AGENTS.md in Sources */,
+				C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */,
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,
+				C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

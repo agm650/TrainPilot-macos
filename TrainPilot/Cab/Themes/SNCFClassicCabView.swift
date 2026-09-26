@@ -611,7 +611,7 @@ private struct CabSessionView: View {
     }
 }
 
-#if DEBUG
+// #if DEBUG
 struct SNCFClassicCabView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
@@ -651,4 +651,4 @@ struct SNCFClassicCabView_Previews: PreviewProvider {
         }
     }
 }
-#endif
+// #endif

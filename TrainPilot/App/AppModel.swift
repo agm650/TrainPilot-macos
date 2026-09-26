@@ -32,6 +32,7 @@ final class AppModel: ObservableObject {
     @Published var knownLeases: [ControlLease] = []
     @Published var errorMessage: String?
     @Published var currentUser: User?
+    @Published private(set) var layoutRepository: LayoutRepository?
 
     let preferences: AppPreferences
     let driving = DrivingSessionManager()
@@ -69,6 +70,7 @@ final class AppModel: ObservableObject {
             connectionState = .connecting
             let client = APIClient(baseURL: url, keychain: keychain)
             api = client
+            layoutRepository = LayoutRepository(dataSource: client)
 
             let info = try await client.systemInfo()
             try await client.validateCompatibility(info)
@@ -103,6 +105,7 @@ final class AppModel: ObservableObject {
 
             let client = APIClient(baseURL: url, keychain: keychain)
             api = client
+            layoutRepository = LayoutRepository(dataSource: client)
 
             let info = try await client.systemInfo()
             try await client.validateCompatibility(info)
@@ -577,6 +580,14 @@ final class AppModel: ObservableObject {
                 restoreOwnSessions(from: leases)
             }
 
+            if let topologyRevision = snapshot.payload.topologyRevision,
+               let presentationRevision = snapshot.payload.layoutPresentationRevision {
+                try? await layoutRepository?.refreshIfNeeded(
+                    topologyRevision: topologyRevision,
+                    presentationRevision: presentationRevision
+                )
+            }
+
         case .event(let event):
             await handle(event)
         }
@@ -687,6 +698,10 @@ final class AppModel: ObservableObject {
                  "locomotive.deleted",
                  "rolling-stock.imported":
                 await refreshLocomotives()
+
+            case "layout.imported":
+                // The following snapshot confirms authoritative revisions.
+                break
 
             default:
                 break
@@ -901,6 +916,7 @@ final class AppModel: ObservableObject {
 
         eventClient = nil
         api = nil
+        layoutRepository = nil
 
         systemInfo = nil
         stationStatus = .unknown
