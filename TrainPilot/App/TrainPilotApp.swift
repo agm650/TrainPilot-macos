@@ -19,6 +19,14 @@ struct TrainPilotApp: App {
                 .disabled(appModel.layoutEditorDocument == nil)
             }
 
+            CommandMenu("Layout") {
+                Button("Ouvrir Layout Studio…") {
+                    WindowCoordinator.shared.showLayoutStudio(appModel: appModel)
+                }
+                .keyboardShortcut("l", modifiers: [.command, .option])
+                .disabled(!LayoutStudioAccessPolicy.canOpen(currentUser: appModel.currentUser))
+            }
+
             CommandMenu("TrainPilot") {
                 Button("Bibliothèque…") {
                     WindowCoordinator.shared.showLibrary(appModel: appModel)

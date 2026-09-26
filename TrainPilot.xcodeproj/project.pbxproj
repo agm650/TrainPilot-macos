@@ -38,6 +38,8 @@
 		C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72374A7304ED0B50054808A /* NetworkViewport.swift */; };
 		C72374AA304F6C260054808A /* TrainPilotCab.icns in Resources */ = {isa = PBXBuildFile; fileRef = C72374A9304F6C260054808A /* TrainPilotCab.icns */; };
 		C72374AE304F6E030054808A /* Asset.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C72374AD304F6E030054808A /* Asset.xcassets */; };
+		C77D642530688F0900A44BB8 /* LayoutStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77D642430688F0900A44BB8 /* LayoutStudio.swift */; };
+		C77D642730688F4900A44BB8 /* LayoutStudioTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77D642630688F4900A44BB8 /* LayoutStudioTests.swift */; };
 		C7AFB22430682BAC0016FE77 /* LayoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22330682BAC0016FE77 /* LayoutModels.swift */; };
 		C7AFB22630682BAC0016FE77 /* LayoutRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */; };
 		C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */; };
@@ -110,6 +112,8 @@
 		C72374A7304ED0B50054808A /* NetworkViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkViewport.swift; sourceTree = "<group>"; };
 		C72374A9304F6C260054808A /* TrainPilotCab.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = TrainPilotCab.icns; sourceTree = "<group>"; };
 		C72374AD304F6E030054808A /* Asset.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Asset.xcassets; sourceTree = "<group>"; };
+		C77D642430688F0900A44BB8 /* LayoutStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutStudio.swift; sourceTree = "<group>"; };
+		C77D642630688F4900A44BB8 /* LayoutStudioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutStudioTests.swift; sourceTree = "<group>"; };
 		C7AFB22330682BAC0016FE77 /* LayoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutModels.swift; sourceTree = "<group>"; };
 		C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutRepository.swift; sourceTree = "<group>"; };
 		C7AFB22730682BAD0016FE77 /* LayoutModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutModelsTests.swift; sourceTree = "<group>"; };
@@ -204,6 +208,7 @@
 				C7AFB24C3068321B0016FE77 /* LayoutBlockEditingTests.swift */,
 				C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */,
 				C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */,
+				C77D642630688F4900A44BB8 /* LayoutStudioTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -359,6 +364,7 @@
 				C7AFB24E306833060016FE77 /* LayoutArchiveBuilder.swift */,
 				C7AFB250306833290016FE77 /* LayoutPublicationCoordinator.swift */,
 				C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */,
+				C77D642430688F0900A44BB8 /* LayoutStudio.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -489,6 +495,7 @@
 				C7237491304ED0620054808A /* ThrottleWheel.swift in Sources */,
 				C7AFB251306833290016FE77 /* LayoutPublicationCoordinator.swift in Sources */,
 				C7AFB23930682F930016FE77 /* LayoutCanvas.swift in Sources */,
+				C77D642530688F0900A44BB8 /* LayoutStudio.swift in Sources */,
 				C7237492304ED0620054808A /* KeychainStore.swift in Sources */,
 				C7237493304ED0620054808A /* FunctionPanel.swift in Sources */,
 				C7AFB24B3068321B0016FE77 /* LayoutBlockEditing.swift in Sources */,
@@ -535,6 +542,7 @@
 				C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */,
 				C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */,
 				C7AFB24D3068321B0016FE77 /* LayoutBlockEditingTests.swift in Sources */,
+				C77D642730688F4900A44BB8 /* LayoutStudioTests.swift in Sources */,
 				C7AFB253306833590016FE77 /* LayoutPublicationCoordinatorTests.swift in Sources */,
 				C7AFB245306830D10016FE77 /* LayoutTrackEditingTests.swift in Sources */,
 				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
