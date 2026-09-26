@@ -253,6 +253,52 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // MARK: - Layout import / export
+
+    func exportCurrentLayout() async -> LayoutArchive? {
+        guard let api else { return nil }
+
+        do {
+            return try await api.exportLayout()
+        } catch {
+            presentError(error)
+            return nil
+        }
+    }
+
+    func validateLayoutImport(_ data: Data) async -> LayoutValidationResult? {
+        guard isAdministrator else {
+            presentError(LayoutEditorError.administratorRequired)
+            return nil
+        }
+        guard let api else { return nil }
+
+        do {
+            return try await api.validateLayout(archive: data, mode: .replace)
+        } catch {
+            presentError(error)
+            return nil
+        }
+    }
+
+    func importLayout(_ data: Data) async -> Bool {
+        guard isAdministrator else {
+            presentError(LayoutEditorError.administratorRequired)
+            return false
+        }
+        guard let api else { return false }
+
+        do {
+            // The current server contract exposes a single-layout replace import.
+            try await api.importLayout(archive: data, mode: .replace)
+            try await layoutRepository?.loadInitialState()
+            return true
+        } catch {
+            presentError(error)
+            return false
+        }
+    }
+
     // MARK: - Rolling stock library
 
     func refreshLocomotives() async {

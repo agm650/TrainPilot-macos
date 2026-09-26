@@ -57,6 +57,16 @@ private struct LayoutStudioValidationInspector: View {
     }
 }
 
+enum LayoutTransferPolicy {
+    static func canImport(currentUser: User?, connectionState: ConnectionState) -> Bool {
+        currentUser?.role == "administrator" && connectionState == .ready
+    }
+
+    static func canExport(currentUser: User?, connectionState: ConnectionState) -> Bool {
+        currentUser != nil && connectionState == .ready
+    }
+}
+
 struct LayoutStudioArchiveService {
     struct Contents {
         let snapshot: LayoutSnapshot

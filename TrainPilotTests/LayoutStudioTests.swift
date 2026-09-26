@@ -31,6 +31,36 @@ final class LayoutStudioTests: XCTestCase {
         )
     }
 
+    func testLayoutTransferPolicyUsesServerSessionAndRole() {
+        let administrator = makeUser(role: "administrator")
+        let driver = makeUser(role: "driver")
+
+        XCTAssertTrue(
+            LayoutTransferPolicy.canImport(
+                currentUser: administrator,
+                connectionState: .ready
+            )
+        )
+        XCTAssertFalse(
+            LayoutTransferPolicy.canImport(
+                currentUser: driver,
+                connectionState: .ready
+            )
+        )
+        XCTAssertTrue(
+            LayoutTransferPolicy.canExport(
+                currentUser: driver,
+                connectionState: .ready
+            )
+        )
+        XCTAssertFalse(
+            LayoutTransferPolicy.canExport(
+                currentUser: administrator,
+                connectionState: .reconnecting
+            )
+        )
+    }
+
     func testNewDocumentIsEmptyAndUsesDefaultGrid() {
         let session = LayoutStudioSession(canPublish: false)
         XCTAssertTrue(session.controller.document.topology.nodes.isEmpty)

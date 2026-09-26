@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 @MainActor
 final class WindowCoordinator: NSObject, NSWindowDelegate {
@@ -78,6 +79,93 @@ final class WindowCoordinator: NSObject, NSWindowDelegate {
         layoutStudioWindow = window
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func importLayout(appModel: AppModel) {
+        let panel = NSOpenPanel()
+        panel.title = "Importer un layout"
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        if let type = UTType(filenameExtension: "dcclayout") {
+            panel.allowedContentTypes = [type]
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        Task {
+            do {
+                _ = try LayoutStudioArchiveService().read(from: url)
+                let data = try Data(contentsOf: url)
+                guard let validation = await appModel.validateLayoutImport(data) else {
+                    return
+                }
+                guard validation.valid else {
+                    showValidationAlert(validation, allowsConfirmation: false)
+                    return
+                }
+                guard showValidationAlert(validation, allowsConfirmation: true) else {
+                    return
+                }
+                if await appModel.importLayout(data) {
+                    showInformation(
+                        title: "Layout importé",
+                        message: "Le layout publié a été rechargé depuis le serveur."
+                    )
+                }
+            } catch {
+                showInformation(
+                    title: "Import impossible",
+                    message: error.localizedDescription
+                )
+            }
+        }
+    }
+
+    func exportLayout(appModel: AppModel) {
+        Task {
+            guard let archive = await appModel.exportCurrentLayout() else { return }
+            do {
+                _ = try LayoutArchiveSaver().save(
+                    archive,
+                    title: "Exporter le layout actuel"
+                )
+            } catch {
+                showInformation(
+                    title: "Export impossible",
+                    message: error.localizedDescription
+                )
+            }
+        }
+    }
+
+    @discardableResult
+    private func showValidationAlert(
+        _ result: LayoutValidationResult,
+        allowsConfirmation: Bool
+    ) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = result.valid
+            ? "Validation réussie"
+            : "Le layout contient des erreurs"
+        let diagnostics = result.errors + result.warnings
+        alert.informativeText = diagnostics.isEmpty
+            ? "Le serveur n’a signalé aucun problème. Confirmez l’import en remplacement."
+            : diagnostics.map(\.message).joined(separator: "\n")
+        if allowsConfirmation {
+            alert.addButton(withTitle: "Importer")
+            alert.addButton(withTitle: "Annuler")
+            return alert.runModal() == .alertFirstButtonReturn
+        }
+        alert.addButton(withTitle: "Fermer")
+        alert.runModal()
+        return false
+    }
+
+    private func showInformation(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     func windowWillClose(_ notification: Notification) {

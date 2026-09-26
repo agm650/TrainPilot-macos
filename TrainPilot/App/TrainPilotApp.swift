@@ -20,7 +20,29 @@ struct TrainPilotApp: App {
             }
 
             CommandMenu("Layout") {
-                Button("Ouvrir Layout Studio…") {
+                Button("Importer un layout…") {
+                    WindowCoordinator.shared.importLayout(appModel: appModel)
+                }
+                .disabled(
+                    !LayoutTransferPolicy.canImport(
+                        currentUser: appModel.currentUser,
+                        connectionState: appModel.connectionState
+                    )
+                )
+
+                Button("Exporter le layout actuel…") {
+                    WindowCoordinator.shared.exportLayout(appModel: appModel)
+                }
+                .disabled(
+                    !LayoutTransferPolicy.canExport(
+                        currentUser: appModel.currentUser,
+                        connectionState: appModel.connectionState
+                    )
+                )
+
+                Divider()
+
+                Button("Ouvrir dans Layout Studio…") {
                     WindowCoordinator.shared.showLayoutStudio(appModel: appModel)
                 }
                 .keyboardShortcut("l", modifiers: [.command, .option])
