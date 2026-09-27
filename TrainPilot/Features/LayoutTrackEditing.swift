@@ -75,6 +75,7 @@ extension LayoutEditorController {
         start: LayoutPoint,
         intermediatePoints: [LayoutPoint] = [],
         end: LayoutPoint,
+        style: LayoutTrackCreationStyle = .straight,
         transform: LayoutViewportTransform,
         snapEnabled: Bool,
         optionKeyPressed: Bool,
@@ -114,10 +115,31 @@ extension LayoutEditorController {
                 enabled: snapEnabled && !optionKeyPressed
             )
         } + [snappedEnd]
-        let path = LayoutTrackPath(
-            trackSectionId: id,
-            segments: points.map { .line(to: $0) }
-        )
+        let segments: [LayoutTrackSegment]
+        if style == .curved, intermediatePoints.isEmpty {
+            let deltaX = snappedEnd.x - snappedStart.x
+            let deltaY = snappedEnd.y - snappedStart.y
+            let curveOffset = hypot(deltaX, deltaY) * 0.25
+            let length = max(hypot(deltaX, deltaY), 1)
+            let normalX = -deltaY / length
+            let normalY = deltaX / length
+            segments = [
+                .cubic(
+                    control1: LayoutPoint(
+                        x: snappedStart.x + deltaX / 3 + normalX * curveOffset,
+                        y: snappedStart.y + deltaY / 3 + normalY * curveOffset
+                    ),
+                    control2: LayoutPoint(
+                        x: snappedStart.x + deltaX * 2 / 3 + normalX * curveOffset,
+                        y: snappedStart.y + deltaY * 2 / 3 + normalY * curveOffset
+                    ),
+                    to: snappedEnd
+                )
+            ]
+        } else {
+            segments = points.map { .line(to: $0) }
+        }
+        let path = LayoutTrackPath(trackSectionId: id, segments: segments)
         topology = topology.replacing(
             trackSections: topology.trackSections + [
                 TrackSection(
@@ -166,9 +188,21 @@ extension LayoutEditorController {
         let end = segments[segmentIndex].endPoint
         let deltaX = (end.x - start.x) / 3
         let deltaY = (end.y - start.y) / 3
+        let fullDeltaX = end.x - start.x
+        let fullDeltaY = end.y - start.y
+        let length = max(hypot(fullDeltaX, fullDeltaY), 1)
+        let curveOffset = length * 0.25
+        let normalX = -fullDeltaY / length
+        let normalY = fullDeltaX / length
         segments[segmentIndex] = .cubic(
-            control1: LayoutPoint(x: start.x + deltaX, y: start.y + deltaY),
-            control2: LayoutPoint(x: start.x + deltaX * 2, y: start.y + deltaY * 2),
+            control1: LayoutPoint(
+                x: start.x + deltaX + normalX * curveOffset,
+                y: start.y + deltaY + normalY * curveOffset
+            ),
+            control2: LayoutPoint(
+                x: start.x + deltaX * 2 + normalX * curveOffset,
+                y: start.y + deltaY * 2 + normalY * curveOffset
+            ),
             to: end
         )
         paths[pathIndex] = LayoutTrackPath(
@@ -317,6 +351,23 @@ extension LayoutTrackSegment {
             return control1.isFinite && control2.isFinite && point.isFinite
         }
     }
+
+    func sampledPoints(from start: LayoutPoint) -> [LayoutPoint] {
+        switch self {
+        case .line(let end):
+            return [start, end]
+        case .cubic(let control1, let control2, let end):
+            return (0...20).map {
+                LayoutPoint.cubic(
+                    from: start,
+                    control1: control1,
+                    control2: control2,
+                    to: end,
+                    t: Double($0) / 20
+                )
+            }
+        }
+    }
 }
 
 extension LayoutPoint {
@@ -324,6 +375,21 @@ extension LayoutPoint {
 
     func distance(to other: LayoutPoint) -> Double {
         hypot(other.x - x, other.y - y)
+    }
+
+    func distanceToSegment(from start: LayoutPoint, to end: LayoutPoint) -> Double {
+        let deltaX = end.x - start.x
+        let deltaY = end.y - start.y
+        let squaredLength = deltaX * deltaX + deltaY * deltaY
+        guard squaredLength > 0 else { return distance(to: start) }
+        let projection = ((x - start.x) * deltaX + (y - start.y) * deltaY) / squaredLength
+        let clamped = min(max(projection, 0), 1)
+        return distance(
+            to: LayoutPoint(
+                x: start.x + clamped * deltaX,
+                y: start.y + clamped * deltaY
+            )
+        )
     }
 
     static func cubic(

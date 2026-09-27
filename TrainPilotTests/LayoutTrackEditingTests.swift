@@ -60,6 +60,48 @@ final class LayoutTrackEditingTests: XCTestCase {
         )
     }
 
+    func testInteractiveCurvedSectionCreatesVisibleBezierGeometry() {
+        let controller = makeEmptyController()
+        controller.selectTrackCreationStyle(.curved)
+
+        controller.createTrack(
+            from: LayoutPoint(x: 0, y: 0),
+            to: LayoutPoint(x: 120, y: 0),
+            transform: LayoutViewportTransform(),
+            snapEnabled: false,
+            optionKeyPressed: false
+        )
+
+        guard case .cubic(let control1, let control2, let end) =
+                controller.document.presentation.trackSections[0].segments[0] else {
+            return XCTFail("Expected an interactive cubic section")
+        }
+        XCTAssertGreaterThan(control1.y, 0)
+        XCTAssertGreaterThan(control2.y, 0)
+        XCTAssertEqual(end, LayoutPoint(x: 120, y: 0))
+        XCTAssertEqual(controller.selection, .trackSection(
+            controller.document.topology.trackSections[0].id
+        ))
+    }
+
+    func testCanvasHitTestingSelectsCurvedSection() {
+        let controller = makeEmptyController()
+        controller.selectTrackCreationStyle(.curved)
+        controller.createTrack(
+            from: LayoutPoint(x: 0, y: 0),
+            to: LayoutPoint(x: 120, y: 0),
+            transform: LayoutViewportTransform(),
+            snapEnabled: false,
+            optionKeyPressed: false
+        )
+        let sectionID = controller.document.topology.trackSections[0].id
+
+        controller.selectTool(.select)
+        controller.selectElement(at: LayoutPoint(x: 60, y: 28), tolerance: 8)
+
+        XCTAssertEqual(controller.selection, .trackSection(sectionID))
+    }
+
     func testMovesBezierControlWithAndWithoutSnap() throws {
         let controller = makeControllerWithTrack()
         try controller.convertTrackSegmentToCubic(sectionID: "s1", segmentIndex: 0)

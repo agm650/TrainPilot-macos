@@ -320,8 +320,7 @@ struct LayoutStudioView: View {
                 LayoutStudioCanvas(controller: session.controller)
                     .frame(minWidth: 600, minHeight: 460)
                 LayoutStudioInspector(
-                    document: session.controller.document,
-                    selection: session.controller.inspectorState,
+                    controller: session.controller,
                     message: session.message
                 )
                 .frame(minWidth: 230, idealWidth: 270, maxWidth: 320)
@@ -352,16 +351,53 @@ private struct LayoutStudioToolbar: View {
                 Label("Enregistrer", systemImage: "square.and.arrow.down")
             }
             Divider().frame(height: 22)
-            ForEach(LayoutEditorTool.allCases, id: \.self) { tool in
-                Button {
-                    controller.selectTool(tool)
-                } label: {
-                    Image(systemName: symbol(for: tool))
-                }
-                .help(label(for: tool))
-                .buttonStyle(.bordered)
-                .tint(controller.tool == tool ? .accentColor : nil)
+            Button {
+                controller.selectTool(.select)
+            } label: {
+                Image(systemName: "cursorarrow")
             }
+            .help("Sélection")
+            .tint(controller.tool == .select ? .accentColor : nil)
+
+            Menu {
+                Button("Section droite") {
+                    controller.selectTrackCreationStyle(.straight)
+                }
+                Button("Section courbe") {
+                    controller.selectTrackCreationStyle(.curved)
+                }
+            } label: {
+                Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+            }
+            .help("Créer une section de voie")
+            .tint(controller.tool == .track ? .accentColor : nil)
+
+            Menu {
+                Button("Aiguille à gauche") {
+                    controller.selectTurnoutCreationStyle(.simpleLeft)
+                }
+                Button("Aiguille à droite") {
+                    controller.selectTurnoutCreationStyle(.simpleRight)
+                }
+                Button("Aiguille triple") {
+                    controller.selectTurnoutCreationStyle(.threeWay)
+                }
+                Button("TJD") {
+                    controller.selectTurnoutCreationStyle(.doubleSlip)
+                }
+            } label: {
+                Image(systemName: "arrow.triangle.branch")
+            }
+            .help("Créer un aiguillage")
+            .tint(controller.tool == .turnout ? .accentColor : nil)
+
+            Button {
+                controller.selectTool(.block)
+            } label: {
+                Image(systemName: "rectangle.3.group")
+            }
+            .help("Block")
+            .tint(controller.tool == .block ? .accentColor : nil)
             Divider().frame(height: 22)
             Button(action: controller.undo) {
                 Image(systemName: "arrow.uturn.backward")
@@ -371,6 +407,12 @@ private struct LayoutStudioToolbar: View {
                 Image(systemName: "arrow.uturn.forward")
             }
             .disabled(!controller.canRedo)
+            Button {
+                try? controller.deleteSelection()
+            } label: {
+                Image(systemName: "trash")
+            }
+            .disabled(controller.selection == nil)
             Spacer()
             Button(action: session.validateLocally) {
                 Label("Valider", systemImage: "checkmark.circle")
@@ -382,28 +424,12 @@ private struct LayoutStudioToolbar: View {
         .padding(8)
     }
 
-    private func symbol(for tool: LayoutEditorTool) -> String {
-        switch tool {
-        case .select: return "cursorarrow"
-        case .track: return "point.topleft.down.to.point.bottomright.curvepath"
-        case .turnout: return "arrow.triangle.branch"
-        case .block: return "rectangle.3.group"
-        }
-    }
-
-    private func label(for tool: LayoutEditorTool) -> String {
-        switch tool {
-        case .select: return "Sélection"
-        case .track: return "Voie"
-        case .turnout: return "Aiguillage"
-        case .block: return "Block"
-        }
-    }
 }
 
 private struct LayoutStudioCanvas: View {
     @ObservedObject var controller: LayoutEditorController
     @ObservedObject private var document: LayoutEditorDocument
+    @AppStorage("layoutEditorSnapToGrid") private var snapToGrid = true
 
     init(controller: LayoutEditorController) {
         self.controller = controller
@@ -414,15 +440,55 @@ private struct LayoutStudioCanvas: View {
         LayoutCanvas(
             topology: document.topology,
             presentation: document.presentation,
-            mode: .editor(showHandles: true)
+            mode: .editor(showHandles: true),
+            onEditorGestureEnded: handleGesture
         )
+    }
+
+    private func handleGesture(
+        start: LayoutPoint,
+        end: LayoutPoint,
+        transform: LayoutViewportTransform
+    ) {
+        let optionKeyPressed = NSEvent.modifierFlags.contains(.option)
+        switch controller.tool {
+        case .select:
+            controller.selectElement(
+                at: end,
+                tolerance: 10 / transform.zoom
+            )
+        case .track:
+            guard start.distance(to: end) >= 4 / transform.zoom else { return }
+            controller.createTrack(
+                from: start,
+                to: end,
+                transform: transform,
+                snapEnabled: snapToGrid,
+                optionKeyPressed: optionKeyPressed
+            )
+        case .turnout:
+            try? controller.createTurnout(
+                at: end,
+                transform: transform,
+                snapEnabled: snapToGrid,
+                optionKeyPressed: optionKeyPressed
+            )
+        case .block:
+            break
+        }
     }
 }
 
 private struct LayoutStudioInspector: View {
-    @ObservedObject var document: LayoutEditorDocument
-    let selection: LayoutInspectorState
+    @ObservedObject var controller: LayoutEditorController
+    @ObservedObject private var document: LayoutEditorDocument
     let message: String?
+
+    init(controller: LayoutEditorController, message: String?) {
+        self.controller = controller
+        document = controller.document
+        self.message = message
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -432,6 +498,7 @@ private struct LayoutStudioInspector: View {
             )
             Divider()
             LayoutStudioSelectionInspector(description: selectionDescription)
+            LayoutStudioSelectionControls(controller: controller)
             Divider()
             LayoutStudioValidationInspector(message: message)
             Spacer()
@@ -440,12 +507,71 @@ private struct LayoutStudioInspector: View {
     }
 
     private var selectionDescription: String {
-        switch selection {
+        switch controller.inspectorState {
         case .noSelection: return "Aucune sélection"
         case .trackSection(let id): return "Voie \(id)"
         case .turnout(let id): return "Aiguillage \(id)"
         case .block(let id): return "Block \(id)"
         case .node(let id): return "Nœud \(id)"
         }
+    }
+}
+
+private struct LayoutStudioSelectionControls: View {
+    @ObservedObject var controller: LayoutEditorController
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            switch controller.selection {
+            case .trackSection(let id):
+                HStack {
+                    Button("Droite") {
+                        try? controller.convertTrackSegmentToLine(
+                            sectionID: id,
+                            segmentIndex: 0
+                        )
+                    }
+                    Button("Courbe") {
+                        try? controller.convertTrackSegmentToCubic(
+                            sectionID: id,
+                            segmentIndex: 0
+                        )
+                    }
+                }
+            case .turnout(let id):
+                HStack {
+                    Button("-90°") {
+                        rotateTurnout(id: id, delta: -90)
+                    }
+                    Button("+90°") {
+                        rotateTurnout(id: id, delta: 90)
+                    }
+                    Button("Miroir") {
+                        mirrorTurnout(id: id)
+                    }
+                }
+            case .block, .node, .none:
+                EmptyView()
+            }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+    }
+
+    private func rotateTurnout(id: String, delta: Double) {
+        guard let turnout = controller.document.presentation.turnouts.first(where: {
+            $0.turnoutId == id
+        }) else { return }
+        try? controller.transformTurnout(
+            id: id,
+            rotationDegrees: turnout.rotationDegrees + delta
+        )
+    }
+
+    private func mirrorTurnout(id: String) {
+        guard let turnout = controller.document.presentation.turnouts.first(where: {
+            $0.turnoutId == id
+        }) else { return }
+        try? controller.transformTurnout(id: id, mirrored: !turnout.mirrored)
     }
 }

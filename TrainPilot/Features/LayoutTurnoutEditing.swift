@@ -170,24 +170,87 @@ extension LayoutEditorController {
         rotationDegrees: Double? = nil,
         mirrored: Bool? = nil
     ) throws {
-        guard document.presentation.turnouts.contains(where: {
+        guard let currentPresentation = document.presentation.turnouts.first(where: {
             $0.turnoutId == id
         }) else {
             throw LayoutEditError.missingResource(id)
         }
+        let nextRotation = rotationDegrees ?? currentPresentation.rotationDegrees
+        let nextMirrored = mirrored ?? currentPresentation.mirrored
+        let portNodeIDs = Set(
+            document.topology.turnoutTopologies
+                .first(where: { $0.turnoutId == id })?
+                .ports
+                .map(\.nodeId) ?? []
+        )
         let turnouts = document.presentation.turnouts.map { turnout in
             guard turnout.turnoutId == id else { return turnout }
             return LayoutTurnoutPresentation(
                 turnoutId: id,
                 x: turnout.x,
                 y: turnout.y,
-                rotationDegrees: rotationDegrees ?? turnout.rotationDegrees,
-                mirrored: mirrored ?? turnout.mirrored
+                    rotationDegrees: nextRotation,
+                    mirrored: nextMirrored
+                )
+        }
+        let center = LayoutPoint(x: currentPresentation.x, y: currentPresentation.y)
+        let nodes = document.presentation.nodes.map { node -> LayoutNodePosition in
+            guard portNodeIDs.contains(node.nodeId) else { return node }
+            let canonical = Self.inverseTransform(
+                LayoutPoint(x: node.x, y: node.y),
+                around: center,
+                rotationDegrees: currentPresentation.rotationDegrees,
+                mirrored: currentPresentation.mirrored
+            )
+            let transformed = Self.applyTransform(
+                canonical,
+                around: center,
+                rotationDegrees: nextRotation,
+                mirrored: nextMirrored
+            )
+            return LayoutNodePosition(
+                nodeId: node.nodeId,
+                x: transformed.x,
+                y: transformed.y
             )
         }
         performMutation {
-            document.replacePresentation(document.presentation.replacing(turnouts: turnouts))
+            document.replacePresentation(
+                document.presentation.replacing(nodes: nodes, turnouts: turnouts)
+            )
         }
+    }
+
+    private static func applyTransform(
+        _ point: LayoutPoint,
+        around center: LayoutPoint,
+        rotationDegrees: Double,
+        mirrored: Bool
+    ) -> LayoutPoint {
+        let radians = rotationDegrees * .pi / 180
+        let deltaX = point.x - center.x
+        let deltaY = (point.y - center.y) * (mirrored ? -1 : 1)
+        return LayoutPoint(
+            x: center.x + deltaX * cos(radians) - deltaY * sin(radians),
+            y: center.y + deltaX * sin(radians) + deltaY * cos(radians)
+        )
+    }
+
+    private static func inverseTransform(
+        _ point: LayoutPoint,
+        around center: LayoutPoint,
+        rotationDegrees: Double,
+        mirrored: Bool
+    ) -> LayoutPoint {
+        let radians = -rotationDegrees * .pi / 180
+        let deltaX = point.x - center.x
+        let deltaY = point.y - center.y
+        let unrotatedX = deltaX * cos(radians) - deltaY * sin(radians)
+        let unrotatedY = deltaX * sin(radians) + deltaY * cos(radians)
+        return LayoutPoint(
+            x: center.x + unrotatedX,
+            y: center.y + unrotatedY * (mirrored ? -1 : 1)
+        )
     }
 
     func updateTurnoutEndpoint(

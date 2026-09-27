@@ -8,6 +8,33 @@ enum LayoutEditorTool: String, CaseIterable, Equatable {
     case block
 }
 
+enum LayoutTrackCreationStyle: String, CaseIterable, Equatable {
+    case straight
+    case curved
+}
+
+enum LayoutTurnoutCreationStyle: String, CaseIterable, Equatable {
+    case simpleLeft
+    case simpleRight
+    case threeWay
+    case doubleSlip
+
+    var kind: TurnoutKind {
+        switch self {
+        case .simpleLeft, .simpleRight:
+            return .simple
+        case .threeWay:
+            return .threeWay
+        case .doubleSlip:
+            return .doubleSlip
+        }
+    }
+
+    var mirrored: Bool {
+        self == .simpleLeft
+    }
+}
+
 enum LayoutEditorSelection: Equatable {
     case trackSection(String)
     case turnout(String)
@@ -55,6 +82,8 @@ final class LayoutEditorController: ObservableObject {
     @Published private(set) var tool: LayoutEditorTool = .select
     @Published private(set) var selection: LayoutEditorSelection?
     @Published private(set) var inspectorState: LayoutInspectorState = .noSelection
+    @Published private(set) var trackCreationStyle: LayoutTrackCreationStyle = .straight
+    @Published private(set) var turnoutCreationStyle: LayoutTurnoutCreationStyle = .simpleRight
 
     let document: LayoutEditorDocument
 
@@ -74,6 +103,98 @@ final class LayoutEditorController: ObservableObject {
         if tool != .select {
             select(nil)
         }
+    }
+
+    func selectTrackCreationStyle(_ style: LayoutTrackCreationStyle) {
+        trackCreationStyle = style
+        selectTool(.track)
+    }
+
+    func selectTurnoutCreationStyle(_ style: LayoutTurnoutCreationStyle) {
+        turnoutCreationStyle = style
+        selectTool(.turnout)
+    }
+
+    func createTrack(
+        from start: LayoutPoint,
+        to end: LayoutPoint,
+        transform: LayoutViewportTransform,
+        snapEnabled: Bool,
+        optionKeyPressed: Bool
+    ) {
+        addTrackSection(
+            start: start,
+            end: end,
+            style: trackCreationStyle,
+            transform: transform,
+            snapEnabled: snapEnabled,
+            optionKeyPressed: optionKeyPressed
+        )
+    }
+
+    func createTurnout(
+        at position: LayoutPoint,
+        transform: LayoutViewportTransform,
+        snapEnabled: Bool,
+        optionKeyPressed: Bool
+    ) throws {
+        let nextAddress = (document.turnoutDefinitions
+            .flatMap(\.endpoints)
+            .map(\.linearAddress)
+            .max() ?? 0) + 1
+        let id = try addTurnout(
+            kind: turnoutCreationStyle.kind,
+            position: position,
+            firstAddress: nextAddress,
+            transform: transform,
+            snapEnabled: snapEnabled,
+            optionKeyPressed: optionKeyPressed
+        )
+        if turnoutCreationStyle.mirrored {
+            try transformTurnout(id: id, mirrored: true)
+        }
+    }
+
+    func selectElement(at point: LayoutPoint, tolerance: Double) {
+        if let turnout = document.presentation.turnouts.first(where: {
+            LayoutPoint(x: $0.x, y: $0.y).distance(to: point) <= tolerance
+        }) {
+            select(.turnout(turnout.turnoutId))
+            return
+        }
+
+        if let node = document.presentation.nodes.first(where: {
+            LayoutPoint(x: $0.x, y: $0.y).distance(to: point) <= tolerance
+        }) {
+            select(.node(node.nodeId))
+            return
+        }
+
+        let topologyByID = Dictionary(
+            uniqueKeysWithValues: document.topology.trackSections.map { ($0.id, $0) }
+        )
+        let positionsByID = Dictionary(
+            uniqueKeysWithValues: document.presentation.nodes.map {
+                ($0.nodeId, LayoutPoint(x: $0.x, y: $0.y))
+            }
+        )
+        for path in document.presentation.trackSections {
+            guard let section = topologyByID[path.trackSectionId],
+                  var current = positionsByID[section.nodeAId] else {
+                continue
+            }
+            for segment in path.segments {
+                let samples = segment.sampledPoints(from: current)
+                if zip(samples, samples.dropFirst()).contains(where: {
+                    point.distanceToSegment(from: $0.0, to: $0.1) <= tolerance
+                }) {
+                    select(.trackSection(path.trackSectionId))
+                    return
+                }
+                current = segment.endPoint
+            }
+        }
+        select(nil)
     }
 
     func select(_ selection: LayoutEditorSelection?) {

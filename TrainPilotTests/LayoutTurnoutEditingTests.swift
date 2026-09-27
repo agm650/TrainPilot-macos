@@ -42,6 +42,54 @@ final class LayoutTurnoutEditingTests: XCTestCase {
         )
     }
 
+    func testInteractivePaletteCreatesLeftRightTripleAndDoubleSlip() throws {
+        let controller = makeController()
+        let styles: [LayoutTurnoutCreationStyle] = [
+            .simpleLeft, .simpleRight, .threeWay, .doubleSlip
+        ]
+
+        for (index, style) in styles.enumerated() {
+            controller.selectTurnoutCreationStyle(style)
+            try controller.createTurnout(
+                at: LayoutPoint(x: Double(index) * 100, y: 0),
+                transform: LayoutViewportTransform(),
+                snapEnabled: false,
+                optionKeyPressed: false
+            )
+        }
+
+        XCTAssertEqual(
+            controller.document.turnoutDefinitions.map(\.kind),
+            [.simple, .simple, .threeWay, .doubleSlip]
+        )
+        XCTAssertTrue(controller.document.presentation.turnouts[0].mirrored)
+        XCTAssertFalse(controller.document.presentation.turnouts[1].mirrored)
+        XCTAssertEqual(controller.document.presentation.nodes[2].y, -20)
+        XCTAssertEqual(controller.document.presentation.nodes[5].y, 20)
+        XCTAssertEqual(
+            controller.document.turnoutDefinitions.map { $0.endpoints[0].linearAddress },
+            [1, 2, 3, 5]
+        )
+        XCTAssertEqual(
+            controller.document.topology.turnoutTopologies.map { $0.ports.count },
+            [3, 3, 4, 4]
+        )
+    }
+
+    func testCanvasHitTestingSelectsTurnout() throws {
+        let controller = makeController()
+        try controller.addTurnout(
+            id: "t1", kind: .doubleSlip, position: LayoutPoint(x: 100, y: 80),
+            firstAddress: 10, transform: LayoutViewportTransform(),
+            snapEnabled: false, optionKeyPressed: false
+        )
+
+        controller.selectTool(.select)
+        controller.selectElement(at: LayoutPoint(x: 103, y: 78), tolerance: 10)
+
+        XCTAssertEqual(controller.selection, .turnout("t1"))
+    }
+
     func testRotationAndMirrorDoNotChangeDCCMapping() throws {
         let controller = makeController()
         try controller.addTurnout(

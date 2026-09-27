@@ -83,6 +83,7 @@ struct TopologyRenderPlan: Equatable, Sendable {
 
     struct Turnout: Equatable, Sendable, Identifiable {
         let presentation: LayoutTurnoutPresentation
+        let ports: [LayoutPoint]
         let blockStyles: [LayoutBlockStyle]
         let blockIDs: [String]
 
@@ -134,6 +135,11 @@ struct TopologyRenderPlan: Equatable, Sendable {
                 blockIDs: blockIDs
             )
         }
+        let turnoutTopologies = Dictionary(
+            uniqueKeysWithValues: topology.turnoutTopologies.map {
+                ($0.turnoutId, $0)
+            }
+        )
         turnouts = presentation.turnouts.map { turnout in
             let styles = topology.blocks.compactMap {
                 block -> LayoutBlockStyle? in
@@ -147,6 +153,10 @@ struct TopologyRenderPlan: Equatable, Sendable {
                 .map(\.id)
             return Turnout(
                 presentation: turnout,
+                ports: turnoutTopologies[turnout.turnoutId]?.ports.compactMap {
+                    guard let position = nodePositions[$0.nodeId] else { return nil }
+                    return LayoutPoint(x: position.x, y: position.y)
+                } ?? [],
                 blockStyles: styles,
                 blockIDs: blockIDs
             )
@@ -286,6 +296,22 @@ struct TopologyRenderer: View {
                     with: .color(Color(hex: style.color).opacity(style.opacity))
                 )
             }
+            var geometry = Path()
+            for port in turnout.ports {
+                geometry.move(to: center)
+                geometry.addLine(
+                    to: transform.canvasPoint(for: port)
+                )
+            }
+            context.stroke(
+                geometry,
+                with: .color(.primary.opacity(0.9)),
+                style: StrokeStyle(
+                    lineWidth: max(2, 3 * transform.zoom),
+                    lineCap: .round,
+                    lineJoin: .round
+                )
+            )
             context.fill(
                 Path(ellipseIn: rect),
                 with: .color(turnoutColor(id: turnout.id))

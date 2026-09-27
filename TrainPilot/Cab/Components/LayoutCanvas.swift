@@ -6,6 +6,11 @@ struct LayoutCanvas: View {
     let mode: LayoutInteractionMode
     var runtime: TopologyRuntimeState = .empty
     var onTurnoutSelected: ((String) -> Void)?
+    var onEditorGestureEnded: ((
+        LayoutPoint,
+        LayoutPoint,
+        LayoutViewportTransform
+    ) -> Void)?
 
     @AppStorage("layoutEditorShowsGrid") private var showsGrid = true
     @AppStorage("layoutEditorSnapToGrid") private var snapToGrid = true
@@ -28,7 +33,7 @@ struct LayoutCanvas: View {
                     runtime: runtime
                 )
                 .contentShape(Rectangle())
-                .gesture(panGesture)
+                .gesture(primaryDragGesture)
                 .simultaneousGesture(magnificationGesture(in: geometry.size))
 
                 turnoutHitTargets(in: geometry.size)
@@ -72,17 +77,25 @@ struct LayoutCanvas: View {
         }
     }
 
-    private var panGesture: some Gesture {
-        DragGesture(minimumDistance: 2)
+    private var primaryDragGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
             .onChanged { value in
-                transform = LayoutViewportTransform(
-                    zoom: panAtGestureStart.zoom,
-                    panX: panAtGestureStart.panX + value.translation.width,
-                    panY: panAtGestureStart.panY + value.translation.height
+                guard onEditorGestureEnded == nil else { return }
+                transform = panAtGestureStart.pannedBy(
+                    x: value.translation.width,
+                    y: value.translation.height
                 )
             }
-            .onEnded { _ in
-                panAtGestureStart = transform
+            .onEnded { value in
+                if let onEditorGestureEnded {
+                    onEditorGestureEnded(
+                        transform.layoutPoint(for: value.startLocation),
+                        transform.layoutPoint(for: value.location),
+                        transform
+                    )
+                } else {
+                    panAtGestureStart = transform
+                }
             }
     }
 
