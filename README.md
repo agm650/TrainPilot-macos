@@ -1,10 +1,12 @@
-# TrainPilot macOS — MVP
+# TrainPilot Cab — macOS et iPadOS
 
-Client natif macOS pour `TrainPilot-server`.
+Clients natifs macOS et iPadOS pour `TrainPilot-server`.
 
 ## Cible
 
 - macOS 12 Monterey minimum
+- iPadOS 16 minimum, iPad uniquement
+- Xcode 27 ; simulateurs iPadOS 26 ou 27 recommandés
 - Swift / SwiftUI
 - Universal Intel + Apple Silicon via le target macOS standard Xcode
 - API TrainPilot HTTP + WebSocket
@@ -45,6 +47,50 @@ Client natif macOS pour `TrainPilot-server`.
    `http://192.168.0.60:8080`
 6. Se connecter avec un utilisateur disposant du rôle `driver` ou supérieur.
 7. Ouvrir **TrainPilot > Bibliothèque…**, prendre le contrôle d'une locomotive puis revenir au poste.
+
+### Application iPad
+
+1. Sélectionner le schéma partagé `TrainPilotPad`.
+2. Choisir un simulateur iPad iOS 26 ou 27.
+3. Exécuter l'application `TrainPilot Cab`.
+
+Le layout iPad est strictement en lecture seule pour sa géométrie. Les commandes
+d'exploitation des aiguillages restent disponibles lorsque la centrale est en ligne.
+
+## Builds et tests
+
+Les schémas `TrainPilot`, `TrainPilotPad`, `TrainPilotCore` et
+`TrainPilotCoreTests` sont partagés. Les commandes utilisées localement et dans la CI sont :
+
+```bash
+# macOS
+xcodebuild -project TrainPilot.xcodeproj -scheme TrainPilot \
+  -configuration Debug -destination 'generic/platform=macOS' \
+  CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project TrainPilot.xcodeproj -scheme TrainPilot \
+  -configuration Release -destination 'generic/platform=macOS' \
+  CODE_SIGNING_ALLOWED=NO build
+
+# iPad Simulator
+xcodebuild -project TrainPilot.xcodeproj -scheme TrainPilotPad \
+  -configuration Debug -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project TrainPilot.xcodeproj -scheme TrainPilotPad \
+  -configuration Release -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO build
+
+# Tests communs et tests macOS
+xcodebuild -project TrainPilot.xcodeproj -scheme TrainPilotCoreTests \
+  -destination 'platform=macOS' test
+xcodebuild -project TrainPilot.xcodeproj -scheme TrainPilot \
+  -destination 'platform=macOS' test
+```
+
+`TrainPilotCore` contient les contrats portables de configuration, d'état,
+de validation et de transfert. Le réseau, les modèles serveur, la conduite et le
+rendu du layout sont compilés depuis les mêmes sources par les applications macOS
+et iPad. `TrainPilot/Cab/Themes`, l'éditeur de layout et la gestion des fenêtres
+restent spécifiques à macOS ; `TrainPilotPad` contient uniquement l'interface iPad.
 
 ## Raccourcis
 

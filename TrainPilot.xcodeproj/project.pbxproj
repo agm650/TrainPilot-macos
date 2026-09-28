@@ -81,6 +81,7 @@
 		C7F59258306A90830034214E /* DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237480304ED0620054808A /* DrivingSession.swift */; };
 		C7F59259306A90830034214E /* DrivingSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237481304ED0620054808A /* DrivingSessionManager.swift */; };
 		C7F5925A306A90E80034214E /* LayoutViewportTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23430682F920016FE77 /* LayoutViewportTransform.swift */; };
+		C7F5926C306A950F0034214E /* TrainPilotCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7F5921C306A822D0034214E /* TrainPilotCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +93,13 @@
 			remoteInfo = TrainPilot;
 		};
 		C7F59237306A85270034214E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C7F5921B306A822D0034214E;
+			remoteInfo = TrainPilotCore;
+		};
+		C7F5926A306A94F10034214E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 000000000000000000000001 /* Project object */;
 			proxyType = 1;
@@ -180,6 +188,7 @@
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 		C7F5921C306A822D0034214E /* TrainPilotCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TrainPilotCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7F59229306A82F40034214E /* TrainPilot Cab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TrainPilot Cab.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C7F59263306A94800034214E /* TrainPilotCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TrainPilotCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -196,6 +205,7 @@
 		C7F59214306A80120034214E /* API */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = API; sourceTree = "<group>"; };
 		C7F5921D306A822D0034214E /* TrainPilotCore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainPilotCore; sourceTree = "<group>"; };
 		C7F5922A306A82F40034214E /* TrainPilotPad */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C7F5923B306A85AC0034214E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = TrainPilotPad; sourceTree = "<group>"; };
+		C7F59264306A94800034214E /* TrainPilotCoreTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainPilotCoreTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -229,6 +239,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C7F59260306A94800034214E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C7F5926C306A950F0034214E /* TrainPilotCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -242,6 +260,7 @@
 				000000000000000000000004 /* TrainPilotTests */,
 				C7F5921D306A822D0034214E /* TrainPilotCore */,
 				C7F5922A306A82F40034214E /* TrainPilotPad */,
+				C7F59264306A94800034214E /* TrainPilotCoreTests */,
 				000000000000000000000005 /* Products */,
 				00000000000000000000001B /* XCTest.framework */,
 				C72374A9304F6C260054808A /* TrainPilotCab.icns */,
@@ -293,6 +312,7 @@
 				000000000000000000000009 /* TrainPilotTests.xctest */,
 				C7F5921C306A822D0034214E /* TrainPilotCore.framework */,
 				C7F59229306A82F40034214E /* TrainPilot Cab.app */,
+				C7F59263306A94800034214E /* TrainPilotCoreTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -561,6 +581,29 @@
 			productReference = C7F59229306A82F40034214E /* TrainPilot Cab.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C7F59262306A94800034214E /* TrainPilotCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C7F59267306A94800034214E /* Build configuration list for PBXNativeTarget "TrainPilotCoreTests" */;
+			buildPhases = (
+				C7F5925F306A94800034214E /* Sources */,
+				C7F59260306A94800034214E /* Frameworks */,
+				C7F59261306A94800034214E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C7F5926B306A94F10034214E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C7F59264306A94800034214E /* TrainPilotCoreTests */,
+			);
+			name = TrainPilotCoreTests;
+			packageProductDependencies = (
+			);
+			productName = TrainPilotCoreTests;
+			productReference = C7F59263306A94800034214E /* TrainPilotCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -584,6 +627,9 @@
 					C7F59228306A82F40034214E = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					C7F59262306A94800034214E = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 000000000000000000000010 /* Build configuration list for PBXProject "TrainPilot" */;
@@ -603,6 +649,7 @@
 				000000000000000000000007 /* TrainPilotTests */,
 				C7F5921B306A822D0034214E /* TrainPilotCore */,
 				C7F59228306A82F40034214E /* TrainPilotPad */,
+				C7F59262306A94800034214E /* TrainPilotCoreTests */,
 			);
 		};
 /* End PBXProject section */
@@ -632,6 +679,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C7F59227306A82F40034214E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C7F59261306A94800034214E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -738,6 +792,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C7F5925F306A94800034214E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -750,6 +811,11 @@
 			isa = PBXTargetDependency;
 			target = C7F5921B306A822D0034214E /* TrainPilotCore */;
 			targetProxy = C7F59237306A85270034214E /* PBXContainerItemProxy */;
+		};
+		C7F5926B306A94F10034214E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C7F5921B306A822D0034214E /* TrainPilotCore */;
+			targetProxy = C7F5926A306A94F10034214E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1074,9 +1140,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-iPad";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1106,6 +1173,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TrainPilotPad/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "TrainPilot Cab";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TrainPilot utilise le réseau local pour se connecter au serveur de commande de votre réseau ferroviaire.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -1153,9 +1222,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-iPad";
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1180,6 +1250,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TrainPilotPad/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "TrainPilot Cab";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TrainPilot utilise le réseau local pour se connecter au serveur de commande de votre réseau ferroviaire.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -1214,6 +1286,104 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		C7F59268306A94800034214E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = fr.lda.TrainPilotCoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 2;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		C7F59269306A94800034214E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = fr.lda.TrainPilotCoreTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
@@ -1266,6 +1436,15 @@
 			buildConfigurations = (
 				C7F59232306A82F50034214E /* Debug */,
 				C7F59233306A82F50034214E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C7F59267306A94800034214E /* Build configuration list for PBXNativeTarget "TrainPilotCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C7F59268306A94800034214E /* Debug */,
+				C7F59269306A94800034214E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

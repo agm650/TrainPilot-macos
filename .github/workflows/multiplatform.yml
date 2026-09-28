@@ -1,0 +1,60 @@
+name: Multiplatform validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: multiplatform-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.scheme }} ${{ matrix.configuration }}
+    runs-on: xcode-27
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scheme: TrainPilot
+            configuration: Debug
+            destination: generic/platform=macOS
+          - scheme: TrainPilot
+            configuration: Release
+            destination: generic/platform=macOS
+          - scheme: TrainPilotPad
+            configuration: Debug
+            destination: generic/platform=iOS Simulator
+          - scheme: TrainPilotPad
+            configuration: Release
+            destination: generic/platform=iOS Simulator
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: >-
+          xcodebuild
+          -project TrainPilot.xcodeproj
+          -scheme "${{ matrix.scheme }}"
+          -configuration "${{ matrix.configuration }}"
+          -destination "${{ matrix.destination }}"
+          CODE_SIGNING_ALLOWED=NO
+          build
+
+  test:
+    name: ${{ matrix.scheme }} tests
+    runs-on: xcode-27
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme: [TrainPilotCoreTests, TrainPilot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: >-
+          xcodebuild
+          -project TrainPilot.xcodeproj
+          -scheme "${{ matrix.scheme }}"
+          -destination 'platform=macOS'
+          CODE_SIGNING_ALLOWED=NO
+          test
