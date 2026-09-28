@@ -189,6 +189,21 @@ actor APIClient: LayoutDataSource {
         )
     }
 
+    func importRollingStock(
+        archive: Data,
+        mode: LayoutImportMode = .merge
+    ) async throws {
+        _ = try await perform(
+            path: "/api/v1/imports/rolling-stock?mode=\(mode.rawValue)",
+            method: "POST",
+            bodyData: archive,
+            authorized: true,
+            expected: [204],
+            allowRefresh: true,
+            contentType: "application/vnd.dcc-control.package+zip"
+        )
+    }
+
     func topology() async throws -> TopologyDefinition {
         try await request(
             path: "/api/v1/topology",

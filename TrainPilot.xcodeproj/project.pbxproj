@@ -68,6 +68,19 @@
 		C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */; };
 		C7F59235306A85270034214E /* TrainPilotCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7F5921C306A822D0034214E /* TrainPilotCore.framework */; };
 		C7F59236306A85270034214E /* TrainPilotCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C7F5921C306A822D0034214E /* TrainPilotCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C7F5924E306A90830034214E /* TopologyRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23630682F920016FE77 /* TopologyRenderer.swift */; };
+		C7F5924F306A90830034214E /* LayoutCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23830682F930016FE77 /* LayoutCanvas.swift */; };
+		C7F59250306A90830034214E /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237475304ED0620054808A /* KeychainStore.swift */; };
+		C7F59251306A90830034214E /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237477304ED0620054808A /* Models.swift */; };
+		C7F59252306A90830034214E /* LayoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22330682BAC0016FE77 /* LayoutModels.swift */; };
+		C7F59253306A90830034214E /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237479304ED0620054808A /* APIClient.swift */; };
+		C7F59254306A90830034214E /* EventClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723747A304ED0620054808A /* EventClient.swift */; };
+		C7F59255306A90830034214E /* SequenceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723747B304ED0620054808A /* SequenceTracker.swift */; };
+		C7F59256306A90830034214E /* LayoutRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */; };
+		C7F59257306A90830034214E /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = C723747D304ED0620054808A /* AppPreferences.swift */; };
+		C7F59258306A90830034214E /* DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237480304ED0620054808A /* DrivingSession.swift */; };
+		C7F59259306A90830034214E /* DrivingSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7237481304ED0620054808A /* DrivingSessionManager.swift */; };
+		C7F5925A306A90E80034214E /* LayoutViewportTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB23430682F920016FE77 /* LayoutViewportTransform.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -709,6 +722,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7F5925A306A90E80034214E /* LayoutViewportTransform.swift in Sources */,
+				C7F5924E306A90830034214E /* TopologyRenderer.swift in Sources */,
+				C7F5924F306A90830034214E /* LayoutCanvas.swift in Sources */,
+				C7F59250306A90830034214E /* KeychainStore.swift in Sources */,
+				C7F59251306A90830034214E /* Models.swift in Sources */,
+				C7F59252306A90830034214E /* LayoutModels.swift in Sources */,
+				C7F59253306A90830034214E /* APIClient.swift in Sources */,
+				C7F59254306A90830034214E /* EventClient.swift in Sources */,
+				C7F59255306A90830034214E /* SequenceTracker.swift in Sources */,
+				C7F59256306A90830034214E /* LayoutRepository.swift in Sources */,
+				C7F59257306A90830034214E /* AppPreferences.swift in Sources */,
+				C7F59258306A90830034214E /* DrivingSession.swift in Sources */,
+				C7F59259306A90830034214E /* DrivingSessionManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1112,7 +1138,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -1185,7 +1211,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;

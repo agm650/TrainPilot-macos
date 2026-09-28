@@ -82,7 +82,7 @@ private struct PadMainView: View {
                 }
                 .navigationTitle("TrainPilot")
             } detail: {
-                PadSectionView(section: model.selectedSection, canDrive: model.canDrive)
+                PadSectionView(model: model)
                     .toolbar {
                         Button("Déconnexion") {
                             model.disconnect()
@@ -133,17 +133,12 @@ private struct StatusLabel: View {
 }
 
 private struct PadSectionView: View {
-    let section: PadSection?
-    let canDrive: Bool
+    @ObservedObject var model: TrainPilotPadModel
 
     var body: some View {
-        switch section {
+        switch model.selectedSection {
         case .library:
-            PadPlaceholderView(
-                title: "Bibliothèque",
-                message: "La bibliothèque de matériel sera affichée ici.",
-                systemImage: "train.side.front.car"
-            )
+            PadLibraryView(model: model)
         case .layout:
             PadPlaceholderView(
                 title: "Layout",
@@ -153,7 +148,7 @@ private struct PadSectionView: View {
         case .driving:
             PadPlaceholderView(
                 title: "Conduite",
-                message: canDrive
+                message: model.canDrive
                     ? "Les commandes de conduite sont disponibles."
                     : "La conduite nécessite une centrale en ligne et une voie alimentée.",
                 systemImage: "gauge.with.dots.needle.67percent"

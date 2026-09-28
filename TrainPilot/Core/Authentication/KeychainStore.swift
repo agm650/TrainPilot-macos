@@ -5,7 +5,7 @@ enum KeychainError: Error {
     case unexpectedStatus(OSStatus)
 }
 
-final class KeychainStore {
+final class KeychainStore: @unchecked Sendable {
     private let service = "fr.trainpilot.macos"
 
     func save(_ value: String, account: String) throws {
