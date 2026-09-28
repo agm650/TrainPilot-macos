@@ -6,6 +6,23 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		C7F5926D306A9D7F0034214E /* TrainPilot-all */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = C7F5926E306A9D7F0034214E /* Build configuration list for PBXAggregateTarget "TrainPilot-all" */;
+			buildPhases = (
+			);
+			dependencies = (
+				C7F59274306A9D9B0034214E /* PBXTargetDependency */,
+				C7F59272306A9D980034214E /* PBXTargetDependency */,
+			);
+			name = "TrainPilot-all";
+			packageProductDependencies = (
+			);
+			productName = "TrainPilot-all";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		00000000000000000000001C /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001B /* XCTest.framework */; };
 		00000000000000000000004A /* SemanticVersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000049 /* SemanticVersionTests.swift */; };
@@ -105,6 +122,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = C7F5921B306A822D0034214E;
 			remoteInfo = TrainPilotCore;
+		};
+		C7F59271306A9D980034214E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000006;
+			remoteInfo = TrainPilot;
+		};
+		C7F59273306A9D9B0034214E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C7F59228306A82F40034214E;
+			remoteInfo = TrainPilotPad;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -630,6 +661,9 @@
 					C7F59262306A94800034214E = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					C7F5926D306A9D7F0034214E = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 000000000000000000000010 /* Build configuration list for PBXProject "TrainPilot" */;
@@ -650,6 +684,7 @@
 				C7F5921B306A822D0034214E /* TrainPilotCore */,
 				C7F59228306A82F40034214E /* TrainPilotPad */,
 				C7F59262306A94800034214E /* TrainPilotCoreTests */,
+				C7F5926D306A9D7F0034214E /* TrainPilot-all */,
 			);
 		};
 /* End PBXProject section */
@@ -816,6 +851,16 @@
 			isa = PBXTargetDependency;
 			target = C7F5921B306A822D0034214E /* TrainPilotCore */;
 			targetProxy = C7F5926A306A94F10034214E /* PBXContainerItemProxy */;
+		};
+		C7F59272306A9D980034214E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000006 /* TrainPilot */;
+			targetProxy = C7F59271306A9D980034214E /* PBXContainerItemProxy */;
+		};
+		C7F59274306A9D9B0034214E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C7F59228306A82F40034214E /* TrainPilotPad */;
+			targetProxy = C7F59273306A9D9B0034214E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1205,6 +1250,8 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
@@ -1282,6 +1329,8 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1392,6 +1441,24 @@
 			};
 			name = Release;
 		};
+		C7F5926F306A9D7F0034214E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3YCBWTYW6P;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C7F59270306A9D7F0034214E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3YCBWTYW6P;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1445,6 +1512,15 @@
 			buildConfigurations = (
 				C7F59268306A94800034214E /* Debug */,
 				C7F59269306A94800034214E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C7F5926E306A9D7F0034214E /* Build configuration list for PBXAggregateTarget "TrainPilot-all" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C7F5926F306A9D7F0034214E /* Debug */,
+				C7F59270306A9D7F0034214E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

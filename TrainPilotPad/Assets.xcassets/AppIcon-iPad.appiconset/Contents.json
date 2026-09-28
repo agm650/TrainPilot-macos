@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "TrainPilotCab 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -12,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "TrainPilotCab 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -23,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "TrainPilotCab.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -83,4 +86,3 @@
     "version" : 1
   }
 }
-
