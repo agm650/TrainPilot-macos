@@ -1,0 +1,1255 @@
+openapi: 3.1.1
+info:
+  title: DCC Control Server API
+  version: 1.13.0
+  description: >-
+    Contract for native DCC clients. User administration is deliberately absent
+    from this public API and is available only over the local administration socket.
+servers:
+  - url: https://dcc-server.example:8443
+  - url: http://127.0.0.1:8080
+security:
+  - bearerAuth: []
+paths:
+  /healthz:
+    get:
+      security: []
+      operationId: health
+      responses:
+        '200':
+          description: Server is ready.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { const: ok }
+  /api/v1/system/info:
+    get:
+      security: []
+      operationId: getSystemInfo
+      responses:
+        '200':
+          description: Server and command-station capabilities.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SystemInfo' }
+  /api/v1/auth/login:
+    post:
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Authenticated session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/auth/refresh:
+    post:
+      security: []
+      operationId: refreshSession
+      description: >-
+        Rotates both tokens. The previous access and refresh tokens become invalid
+        immediately. Existing WebSocket connections close no later than the
+        original access-token expiry and must reconnect with the new access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string, minLength: 20 }
+      responses:
+        '200':
+          description: Rotated access and refresh tokens.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/track-power:
+    get:
+      operationId: getTrackPowerStatus
+      deprecated: true
+      description: Compatibility alias for the complete command-station status.
+      responses:
+        '200':
+          description: Current command-station status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StationStatus' }
+    put:
+      operationId: setTrackPower
+      description: >-
+        Enables or disables track power. Requires drive permission. Power-off is
+        a priority safety command. A successful explicit power-on clears the
+        emergency-stop interlock and permits new driving commands.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        '204': { description: Track-power command accepted by the station driver. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/emergency-stop:
+    post:
+      operationId: emergencyStop
+      description: >-
+        Sends the command station's global priority emergency-stop command.
+        Requires drive permission. Positive throttle and function commands remain
+        inhibited until a subsequent explicit power-on succeeds.
+      responses:
+        '204': { description: Emergency-stop command accepted by the station driver. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/station/status:
+    get:
+      operationId: getStationStatus
+      description: Queries the command station for its current power, operating, fault and telemetry status.
+      responses:
+        '200':
+          description: Current command-station status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StationStatus' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      responses:
+        '204': { description: Session revoked. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/me:
+    get:
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/locomotives:
+    get:
+      operationId: listLocomotives
+      responses:
+        '200':
+          description: Rolling-stock locomotives.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Locomotive' }
+    post:
+      operationId: createLocomotive
+      description: Creates a locomotive. Requires the administrator role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LocomotiveInput' }
+      responses:
+        '201':
+          description: Locomotive created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Locomotive' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/locomotives/{locomotiveId}:
+    parameters:
+      - $ref: '#/components/parameters/LocomotiveId'
+    get:
+      operationId: getLocomotive
+      responses:
+        '200':
+          description: Locomotive details.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Locomotive' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      operationId: updateLocomotive
+      description: Replaces the writable locomotive properties. Requires the administrator role and no active control lease.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LocomotiveInput' }
+      responses:
+        '200':
+          description: Locomotive updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Locomotive' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      operationId: deleteLocomotive
+      description: Deletes an unused locomotive. Requires the administrator role. Locomotives referenced by control history are retained and return 409.
+      responses:
+        '204': { description: Locomotive deleted. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/locomotives/{locomotiveId}/control-lease:
+    parameters:
+      - $ref: '#/components/parameters/LocomotiveId'
+    post:
+      operationId: acquireLocomotiveControl
+      description: Atomically acquires exclusive control of a free locomotive.
+      responses:
+        '201':
+          description: Exclusive control acquired.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ControlLease' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Another live lease already owns the locomotive.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /api/v1/control-leases/{leaseId}/heartbeat:
+    parameters:
+      - $ref: '#/components/parameters/LeaseId'
+    put:
+      operationId: heartbeatControlLease
+      description: >-
+        Renews the lease inactivity deadline. A heartbeat received at or after
+        expiresAt is rejected and never revives an expired unswept lease.
+      responses:
+        '200':
+          description: Lease renewed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ControlLease' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/control-leases/{leaseId}/takeover:
+    parameters:
+      - $ref: '#/components/parameters/LeaseId'
+    post:
+      operationId: takeoverControlLease
+      summary: Take over a locomotive control lease from another session of the same user
+      description: >-
+        Explicitly transfers an active, unexpired lease from another session of
+        the authenticated user. The locomotive is stopped at zero under the
+        safety command barrier before the atomic transfer. The lease ID is
+        preserved. Calling this operation from the current owner is idempotent.
+        It never takes over a lease owned by another user and does not change
+        standard acquisition semantics.
+      responses:
+        '200':
+          description: Lease transferred, or already owned by the authenticated session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ControlLease' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: >-
+            Takeover refused. Stable problem codes are `lease_not_active`,
+            `lease_owned_by_other_user` and `lease_takeover_conflict`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/control-leases/{leaseId}:
+    parameters:
+      - $ref: '#/components/parameters/LeaseId'
+    delete:
+      operationId: releaseControlLease
+      description: Commands speed zero and moves the lease to stopping before release.
+      responses:
+        '202': { description: Controlled stop and release accepted. }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/locomotives/{locomotiveId}/throttle:
+    parameters:
+      - $ref: '#/components/parameters/LocomotiveId'
+    put:
+      operationId: setLocomotiveThrottle
+      description: >-
+        Sets speed and direction and renews the active lease inactivity deadline.
+        Speed zero is a safety command and preempts queued ordinary commands. A
+        positive speed is rejected while track power is off or unknown, while an
+        emergency stop is active, or when a safety command preempted it while queued.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ThrottleCommand' }
+      responses:
+        '204': { description: Command accepted by the station driver. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/locomotives/{locomotiveId}/functions/{functionNumber}:
+    parameters:
+      - $ref: '#/components/parameters/LocomotiveId'
+      - name: functionNumber
+        in: path
+        required: true
+        schema: { type: integer, minimum: 0, maximum: 68 }
+    put:
+      operationId: setLocomotiveFunction
+      description: >-
+        Sets a locomotive function and renews the active lease inactivity deadline.
+        The command is rejected while track power is off or unknown, while an
+        emergency stop is active, or when a safety command preempted it while queued.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [leaseId, enabled]
+              properties:
+                leaseId: { type: string, format: uuid }
+                enabled: { type: boolean }
+      responses:
+        '204': { description: Function command accepted. }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/blocks:
+    get:
+      operationId: listBlocks
+      responses:
+        '200':
+          description: Blocks and their current occupancy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Block' }
+  /api/v1/blocks/{blockId}/occupancy-sources:
+    parameters:
+      - name: blockId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getBlockOccupancySources
+      description: Returns per-source runtime diagnostics for dispatcher and administrator roles.
+      responses:
+        '200':
+          description: Configured source states for the block.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/SensorOccupancyState' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/occupancy/observations:
+    post:
+      operationId: postOccupancyObservation
+      description: >-
+        Accepts one observation from an external provider configured with
+        time-based freshness. Requires the sensor role and occupancy:write
+        capability. Identical duplicate sequences are accepted as no-ops.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OccupancyObservationInput' }
+      responses:
+        '202': { description: Observation accepted or identical duplicate ignored. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/occupancy/snapshot:
+    post:
+      operationId: postOccupancySnapshot
+      description: >-
+        Atomically validates and accepts 1 to 256 observations from one external
+        provider. Sensors omitted from a snapshot are not inferred to be free.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OccupancySnapshotInput' }
+      responses:
+        '202': { description: Snapshot accepted. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/topology:
+    get:
+      operationId: getTopology
+      description: >-
+        Returns the canonical physical topology and its deterministic revision.
+        Runtime block occupancy and turnout state remain on their existing resources.
+      responses:
+        '200':
+          description: Complete persisted physical topology.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TopologyDefinition' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/layout/presentation:
+    get:
+      operationId: getLayoutPresentation
+      description: >-
+        Returns persisted drawing data and its independent deterministic revision.
+        Every authenticated role may read it. Coordinates use abstract layout units.
+      responses:
+        '200':
+          description: Canonical graphical layout presentation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LayoutPresentationDefinition' }
+              example:
+                revision: 66d1f79391497b6a68e617899f73e89ea16d900720a765039a2a15203677ad97
+                coordinateSystem: layout-units
+                gridSpacing: 20
+                nodes: []
+                trackSections: []
+                turnouts: []
+                blocks: []
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/turnouts:
+    get:
+      operationId: listTurnouts
+      responses:
+        '200':
+          description: Turnouts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Turnout' }
+  /api/v1/turnouts/{turnoutId}:
+    parameters:
+      - name: turnoutId
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      operationId: setTurnout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                position:
+                  type: string
+                  minLength: 1
+                  description: Stable ID of one position declared by the turnout definition.
+                state:
+                  type: string
+                  minLength: 1
+                  deprecated: true
+                  description: Deprecated compatibility field accepted only for simple turnouts. Use position.
+              oneOf:
+                - required: [position]
+                - required: [state]
+      responses:
+        '204': { description: Turnout position confirmed by all required endpoint reports. }
+        '400':
+          description: Missing, conflicting or invalid logical position (`invalid_turnout_position`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Turnout not found (`turnout_not_found`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '409':
+          description: >-
+            Turnout busy, transition or confirmation failure, or unsupported
+            station (`turnout_busy`, `turnout_transition_failed`,
+            `turnout_confirmation_timeout`, `station_unsupported`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /api/v1/routes:
+    get:
+      operationId: listRoutes
+      responses:
+        '200':
+          description: Routes and their operational states.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Route' }
+  /api/v1/routes/{routeId}/reserve:
+    parameters: [{ $ref: '#/components/parameters/RouteId' }]
+    post:
+      operationId: reserveRoute
+      responses:
+        '204': { description: Route reserved atomically. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/routes/{routeId}/activate:
+    parameters: [{ $ref: '#/components/parameters/RouteId' }]
+    post:
+      operationId: activateRoute
+      responses:
+        '204': { description: Required turnouts commanded and route activated. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: >-
+            Route activation refused before any turnout command. The stable problem
+            code is `route_occupied` when a route block is occupied,
+            `route_occupancy_unknown` when its safe state is unavailable, or
+            `route_conflict` when another conflicting route is reserved or active.
+          content:
+            application/problem+json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Problem' }
+                  - type: object
+                    properties:
+                      status: { type: integer, enum: [409] }
+                      category: { type: string, enum: [conflict] }
+                      code: { type: string, enum: [route_occupied, route_occupancy_unknown, route_conflict] }
+  /api/v1/routes/{routeId}/release:
+    parameters: [{ $ref: '#/components/parameters/RouteId' }]
+    post:
+      operationId: releaseRoute
+      responses:
+        '204': { description: Route released. }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/exports/rolling-stock:
+    get:
+      operationId: exportRollingStock
+      description: Downloads a versioned ZIP archive containing the rolling-stock library.
+      responses:
+        '200':
+          description: Rolling-stock archive.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+          content:
+            application/vnd.dcc-control.package+zip:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/imports/rolling-stock:
+    post:
+      operationId: importRollingStock
+      description: Imports a native rolling-stock archive. Requires the administrator role.
+      parameters:
+        - $ref: '#/components/parameters/ImportMode'
+      requestBody:
+        required: true
+        content:
+          application/vnd.dcc-control.package+zip:
+            schema: { type: string, format: binary }
+          application/zip:
+            schema: { type: string, format: binary }
+      responses:
+        '204': { description: Archive imported. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/layout/export:
+    get:
+      operationId: exportLayout
+      description: Downloads blocks, turnouts, routes and feedback mappings as a versioned ZIP archive.
+      responses:
+        '200':
+          description: Layout archive.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+          content:
+            application/vnd.dcc-control.package+zip:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/layout/validate:
+    post:
+      operationId: validateLayoutArchive
+      description: >-
+        Validates a native layout archive against current server state using the
+        selected import mode. Requires the administrator role. All database
+        changes are rolled back; no station command or layout event is sent.
+      parameters:
+        - $ref: '#/components/parameters/ImportMode'
+      requestBody:
+        required: true
+        content:
+          application/vnd.dcc-control.package+zip:
+            schema: { type: string, format: binary }
+          application/zip:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          description: >-
+            Validation result. Invalid archive content is reported with
+            valid=false and structured errors.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LayoutValidationResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/layout/import:
+    post:
+      operationId: importLayout
+      description: Imports a native layout archive. Requires the administrator role.
+      parameters:
+        - $ref: '#/components/parameters/ImportMode'
+      requestBody:
+        required: true
+        content:
+          application/vnd.dcc-control.package+zip:
+            schema: { type: string, format: binary }
+          application/zip:
+            schema: { type: string, format: binary }
+      responses:
+        '204': { description: Archive imported. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/events:
+    get:
+      operationId: openEventWebSocket
+      description: >-
+        Upgrades to WebSocket. The first message is a complete system.snapshot.
+        Clients ignore events whose sequence is less than or equal to the latest
+        snapshot sequence and request another snapshot after a gap. The connection
+        closes when its access token expires, its session is revoked, or a write
+        exceeds 5 seconds. If its 64-event queue overflows, the oldest queued event
+        is replaced by the newest one; the resulting sequence gap lets the client
+        request a snapshot on the same connection. Reconnection starts with a
+        complete snapshot. Event schemas are defined in asyncapi.yaml.
+      responses:
+        '101': { description: WebSocket established. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  parameters:
+    LocomotiveId:
+      name: locomotiveId
+      in: path
+      required: true
+      schema: { type: string }
+    LeaseId:
+      name: leaseId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RouteId:
+      name: routeId
+      in: path
+      required: true
+      schema: { type: string }
+    ImportMode:
+      name: mode
+      in: query
+      required: false
+      description: Merge archive objects into the database or replace the corresponding library.
+      schema: { type: string, enum: [merge, replace], default: merge }
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Missing, invalid, expired or revoked access token.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Authenticated role is not authorised.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: >-
+        Operational state prevents the command. Safety-related problem codes are
+        `emergency_stop_active`, `track_power_off`, `track_power_unknown` and
+        `safety_command_preempted`.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ServiceUnavailable:
+      description: Command station is offline. The problem code is `station_offline`.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    LayoutValidationResult:
+      type: object
+      additionalProperties: false
+      required: [valid, errors, warnings]
+      properties:
+        valid: { type: boolean }
+        errors:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutValidationDiagnostic' }
+        warnings:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutValidationDiagnostic' }
+    LayoutValidationDiagnostic:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code: { type: string }
+        resourceType: { type: string }
+        resourceId: { type: string }
+        message: { type: string }
+    Problem:
+      type: object
+      required: [type, title, status, code, category]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        category:
+          type: string
+          enum: [authentication, authorization, validation, not_found, conflict, safety, station_unavailable, internal]
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password, clientId]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 32 }
+        password: { type: string, minLength: 10 }
+        clientId: { type: string, minLength: 1, maxLength: 128 }
+        clientName: { type: string, maxLength: 128 }
+        platform: { type: string, maxLength: 64 }
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, accessExpiresAt, refreshExpiresAt, sessionId, user]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        accessExpiresAt: { type: string, format: date-time }
+        refreshExpiresAt: { type: string, format: date-time }
+        sessionId: { type: string, format: uuid }
+        user: { $ref: '#/components/schemas/User' }
+    User:
+      type: object
+      required: [id, username, role, enabled, mustChangePassword, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        displayName: { type: string }
+        role: { type: string, enum: [viewer, driver, dispatcher, administrator, sensor] }
+        enabled: { type: boolean }
+        mustChangePassword: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        lastLoginAt: { type: string, format: date-time }
+    Capabilities:
+      type: object
+      required: [driver, trackPower, locomotiveControl, functions, maxFunctionNumber, accessoryControl, feedback]
+      properties:
+        driver: { type: string, enum: [simulator, dccex, z21] }
+        trackPower: { type: boolean }
+        locomotiveControl: { type: boolean }
+        functions:
+          type: integer
+          minimum: 0
+          description: Number of supported function numbers, retained for compatibility.
+        maxFunctionNumber:
+          type: integer
+          minimum: 0
+          description: Inclusive maximum function number accepted by the current driver.
+        accessoryControl: { type: boolean }
+        feedback: { type: boolean }
+    StationStatus:
+      type: object
+      additionalProperties: false
+      required: [connectivity, trackPower, emergencyStop, shortCircuit, programmingMode, mainCurrentMilliAmps, programmingCurrentMilliAmps, filteredMainCurrentMilliAmps, temperatureCelsius, supplyVoltageMilliVolts, trackVoltageMilliVolts, highTemperature, powerLost, externalShortCircuit, internalShortCircuit]
+      properties:
+        connectivity: { type: string, enum: [online, degraded, offline] }
+        lastSeen: { type: string, format: date-time }
+        trackPower: { type: string, enum: [on, off, unknown] }
+        emergencyStop: { type: boolean }
+        shortCircuit: { type: boolean }
+        programmingMode: { type: boolean }
+        mainCurrentMilliAmps: { type: integer }
+        programmingCurrentMilliAmps: { type: integer }
+        filteredMainCurrentMilliAmps: { type: integer }
+        temperatureCelsius: { type: integer }
+        supplyVoltageMilliVolts: { type: integer, minimum: 0 }
+        trackVoltageMilliVolts: { type: integer, minimum: 0 }
+        highTemperature: { type: boolean }
+        powerLost: { type: boolean }
+        externalShortCircuit: { type: boolean }
+        internalShortCircuit: { type: boolean }
+    SystemInfo:
+      type: object
+      required: [serverVersion, apiVersion, minimumClientApiVersion, eventApiVersion, minimumClientEventApiVersion, station]
+      properties:
+        serverVersion: { type: string }
+        apiVersion: { type: string }
+        minimumClientApiVersion: { type: string }
+        eventApiVersion: { type: string }
+        minimumClientEventApiVersion: { type: string }
+        station: { $ref: '#/components/schemas/Capabilities' }
+    LocomotiveInput:
+      type: object
+      additionalProperties: false
+      required: [name, dccAddress, addressKind, speedSteps]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 128 }
+        dccAddress: { type: integer, minimum: 1, maximum: 10239 }
+        addressKind: { type: string, enum: [short, long] }
+        speedSteps: { type: integer, enum: [14, 28, 128] }
+        manufacturer: { type: string, maxLength: 128 }
+        model: { type: string, maxLength: 128 }
+    Locomotive:
+      allOf:
+        - $ref: '#/components/schemas/LocomotiveInput'
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string }
+    ControlLease:
+      type: object
+      required: [id, locomotiveId, userId, sessionId, state, acquiredAt, renewedAt, expiresAt, heartbeatMillis]
+      properties:
+        id: { type: string, format: uuid }
+        locomotiveId: { type: string }
+        userId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        state: { type: string, enum: [active, stopping, released] }
+        acquiredAt: { type: string, format: date-time }
+        renewedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        releaseAfter: { type: string, format: date-time }
+        releaseReason: { type: string }
+        heartbeatMillis: { type: integer, minimum: 100 }
+    ThrottleCommand:
+      type: object
+      additionalProperties: false
+      required: [leaseId, speed, direction]
+      properties:
+        leaseId: { type: string, format: uuid }
+        speed: { type: integer, minimum: 0, maximum: 100 }
+        direction: { type: string, enum: [forward, reverse] }
+    Block:
+      type: object
+      required: [id, name, occupied, occupancy]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        occupied:
+          type: boolean
+          deprecated: true
+          description: Derived compatibility field; true only when occupancy.state is occupied.
+        occupancy: { $ref: '#/components/schemas/BlockOccupancy' }
+    BlockOccupancy:
+      type: object
+      required: [state, updatedAt]
+      properties:
+        state: { type: string, enum: [unknown, free, occupied] }
+        occupant: { $ref: '#/components/schemas/OccupantRef' }
+        updatedAt: { type: string, format: date-time }
+    OccupantRef:
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type: { type: string, minLength: 1 }
+        id: { type: string, minLength: 1 }
+    OccupancyObservationInput:
+      type: object
+      additionalProperties: false
+      required: [providerId, sensorId, state, sequence, observedAt]
+      properties:
+        providerId: { type: string, minLength: 1 }
+        sensorId: { type: string, minLength: 1 }
+        state: { type: string, enum: [unknown, free, occupied] }
+        sequence: { type: integer, minimum: 1 }
+        observedAt: { type: string, format: date-time }
+        occupant: { $ref: '#/components/schemas/OccupantRef' }
+    OccupancySnapshotItem:
+      type: object
+      additionalProperties: false
+      required: [sensorId, state]
+      properties:
+        sensorId: { type: string, minLength: 1 }
+        state: { type: string, enum: [unknown, free, occupied] }
+        occupant: { $ref: '#/components/schemas/OccupantRef' }
+    OccupancySnapshotInput:
+      type: object
+      additionalProperties: false
+      required: [providerId, sequence, observedAt, observations]
+      properties:
+        providerId: { type: string, minLength: 1 }
+        sequence: { type: integer, minimum: 1 }
+        observedAt: { type: string, format: date-time }
+        observations:
+          type: array
+          minItems: 1
+          maxItems: 256
+          items: { $ref: '#/components/schemas/OccupancySnapshotItem' }
+    SensorOccupancyState:
+      type: object
+      required: [providerId, sensorId, blockId, state, sequence, observedAt, receivedAt, required, priority, fresh, available]
+      properties:
+        providerId: { type: string }
+        sensorId: { type: string }
+        blockId: { type: string }
+        state: { type: string, enum: [unknown, free, occupied] }
+        sequence: { type: integer, minimum: 0 }
+        observedAt: { type: string, format: date-time }
+        receivedAt: { type: string, format: date-time }
+        occupant: { $ref: '#/components/schemas/OccupantRef' }
+        required: { type: boolean }
+        priority: { type: integer, minimum: 0, maximum: 100 }
+        fresh: { type: boolean }
+        available: { type: boolean }
+    TopologyDefinition:
+      type: object
+      additionalProperties: false
+      required: [revision, nodes, trackSections, turnoutTopologies, blocks]
+      properties:
+        revision:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: SHA-256 of the canonical physical topology and block membership.
+        nodes:
+          type: array
+          items: { $ref: '#/components/schemas/TopologyNode' }
+        trackSections:
+          type: array
+          items: { $ref: '#/components/schemas/TrackSection' }
+        turnoutTopologies:
+          type: array
+          items: { $ref: '#/components/schemas/TurnoutTopology' }
+        blocks:
+          type: array
+          items: { $ref: '#/components/schemas/BlockDefinition' }
+    LayoutPresentationDefinition:
+      type: object
+      additionalProperties: false
+      required: [revision, coordinateSystem, gridSpacing, nodes, trackSections, turnouts, blocks]
+      properties:
+        revision:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: SHA-256 of canonical persisted graphical presentation only.
+        coordinateSystem: { const: layout-units }
+        gridSpacing:
+          type: number
+          exclusiveMinimum: 0
+          description: Layout grid interval in abstract layout units; defaults to 20.
+        nodes:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutNodePosition' }
+        trackSections:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutTrackPath' }
+        turnouts:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutTurnoutPosition' }
+        blocks:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutBlockStyle' }
+    LayoutPoint:
+      type: object
+      additionalProperties: false
+      required: [x, y]
+      properties:
+        x: { type: number }
+        y: { type: number }
+    LayoutNodePosition:
+      type: object
+      additionalProperties: false
+      required: [nodeId, x, y]
+      properties:
+        nodeId: { type: string, minLength: 1 }
+        x: { type: number }
+        y: { type: number }
+    LayoutTrackPath:
+      type: object
+      additionalProperties: false
+      required: [trackSectionId, segments]
+      properties:
+        trackSectionId: { type: string, minLength: 1 }
+        segments:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/LayoutTrackSegment' }
+    LayoutTrackSegment:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [type, to]
+          properties:
+            type: { const: line }
+            to: { $ref: '#/components/schemas/LayoutPoint' }
+        - type: object
+          additionalProperties: false
+          required: [type, control1, control2, to]
+          properties:
+            type: { const: cubic }
+            control1: { $ref: '#/components/schemas/LayoutPoint' }
+            control2: { $ref: '#/components/schemas/LayoutPoint' }
+            to: { $ref: '#/components/schemas/LayoutPoint' }
+    LayoutTurnoutPosition:
+      type: object
+      additionalProperties: false
+      required: [turnoutId, x, y, rotationDegrees, mirrored]
+      description: Visual placement only. Rotation and mirroring never invert DCC commands.
+      properties:
+        turnoutId: { type: string, minLength: 1 }
+        x: { type: number }
+        y: { type: number }
+        rotationDegrees: { type: number }
+        mirrored: { type: boolean }
+    LayoutBlockStyle:
+      type: object
+      additionalProperties: false
+      required: [blockId, color, opacity]
+      properties:
+        blockId: { type: string, minLength: 1 }
+        color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+        opacity: { type: number, minimum: 0, maximum: 1 }
+    TopologyNode:
+      type: object
+      additionalProperties: false
+      required: [id, kind]
+      properties:
+        id: { type: string, minLength: 1 }
+        name: { type: string }
+        kind: { type: string, enum: [joint, buffer, boundary] }
+    TrackSection:
+      type: object
+      additionalProperties: false
+      required: [id, name, nodeAId, nodeBId]
+      properties:
+        id: { type: string, minLength: 1 }
+        name: { type: string }
+        nodeAId: { type: string, minLength: 1 }
+        nodeBId: { type: string, minLength: 1 }
+        lengthMm: { type: integer, minimum: 0 }
+    TurnoutTopology:
+      type: object
+      additionalProperties: false
+      required: [turnoutId, ports, positions]
+      description: >-
+        Physical ports and connections keyed by logical turnout position.
+        When topology is supplied, every declared logical position must be
+        represented, and every topology position must be declared by the turnout.
+      properties:
+        turnoutId: { type: string, minLength: 1 }
+        ports:
+          type: array
+          minItems: 2
+          items: { $ref: '#/components/schemas/TurnoutPort' }
+        positions:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/TurnoutTopologyPosition' }
+    TurnoutPort:
+      type: object
+      additionalProperties: false
+      required: [id, nodeId]
+      properties:
+        id: { type: string, minLength: 1 }
+        nodeId: { type: string, minLength: 1 }
+    TurnoutTopologyPosition:
+      type: object
+      additionalProperties: false
+      required: [positionId, connections]
+      properties:
+        positionId: { type: string, minLength: 1 }
+        connections:
+          type: array
+          items: { $ref: '#/components/schemas/PortConnection' }
+    PortConnection:
+      type: object
+      additionalProperties: false
+      required: [portAId, portBId]
+      properties:
+        portAId: { type: string, minLength: 1 }
+        portBId: { type: string, minLength: 1 }
+    BlockDefinition:
+      type: object
+      additionalProperties: false
+      required: [id, name, trackSectionIds]
+      properties:
+        id: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1 }
+        trackSectionIds:
+          type: array
+          items: { type: string, minLength: 1 }
+        turnoutIds:
+          type: array
+          items: { type: string, minLength: 1 }
+    AccessoryEndpoint:
+      type: object
+      required: [id, linearAddress]
+      properties:
+        id: { type: string, minLength: 1 }
+        linearAddress:
+          type: integer
+          minimum: 1
+          maximum: 2040
+          description: Canonical linear DCC accessory address used by TrainPilot.
+        inverted:
+          type: boolean
+          default: false
+          description: >-
+            Swaps position1 and position2 at the driver boundary and when
+            resolving reports. Independent of graphical rotation and mirroring.
+    TurnoutPositionDefinition:
+      type: object
+      required: [id, endpoints]
+      properties:
+        id: { type: string, minLength: 1 }
+        label: { type: string }
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [position1, position2]
+          description: Complete endpoint vector for this logical position.
+    Turnout:
+      type: object
+      required: [id, name, kind, endpoints, positions, desiredPosition, reportedPosition, pending, reportedStatus, commandStatus]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind:
+          type: string
+          enum: [simple, three_way, double_slip, single_slip, custom]
+          description: >-
+            UI and domain classification. A simple turnout has one endpoint
+            and two positions. Declared vectors remain the source of truth.
+        endpoints:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/AccessoryEndpoint' }
+        positions:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/TurnoutPositionDefinition' }
+        desiredPosition:
+          type: string
+          description: Requested logical position. Empty when unknown.
+        reportedPosition:
+          type: string
+          description: Resolved logical position. Empty when unknown or physically invalid.
+        pending: { type: boolean }
+        reportedStatus:
+          type: string
+          enum: [known, unknown, invalid]
+          description: Whether the endpoint vector resolves to a declared logical position.
+        reportQuality:
+          type: string
+          enum: [assumed, station, physical]
+          description: Lowest confidence among all endpoint observations.
+        commandStatus:
+          type: string
+          enum: [idle, pending, succeeded, failed, timeout]
+        dccAddress:
+          type: integer
+          minimum: 1
+          deprecated: true
+          description: Compatibility field present only for a simple turnout.
+        desiredState:
+          type: string
+          enum: [straight, diverging, unknown]
+          deprecated: true
+        reportedState:
+          type: string
+          enum: [straight, diverging, unknown]
+          deprecated: true
+      example:
+        id: T3
+        name: Aiguille triple entrée gare
+        kind: three_way
+        endpoints:
+          - { id: A, linearAddress: 20 }
+          - { id: B, linearAddress: 21 }
+        positions:
+          - id: left
+            label: Gauche
+            endpoints: { A: position2, B: position1 }
+          - id: straight
+            label: Direct
+            endpoints: { A: position1, B: position1 }
+          - id: right
+            label: Droite
+            endpoints: { A: position1, B: position2 }
+        desiredPosition: right
+        reportedPosition: straight
+        pending: true
+        reportedStatus: known
+        reportQuality: station
+        commandStatus: pending
+    Route:
+      type: object
+      required: [id, name, state]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        state: { type: string, enum: [idle, reserved, active] }
+        reservedBySession: { type: string }

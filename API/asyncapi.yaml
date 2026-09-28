@@ -1,0 +1,688 @@
+asyncapi: 3.0.0
+info:
+  title: DCC Control Server Events
+  version: 1.12.0
+  description: >-
+    WebSocket event contract for native clients, including complete sequenced
+    snapshots and explicit resynchronization requests. After a snapshot, clients
+    ignore queued events whose sequence is less than or equal to the snapshot
+    sequence. A sequence gap requires client.snapshot_request. The connection
+    closes when the opening access token expires or the session is revoked.
+    Each connection has a 64-event queue. On overflow, the oldest queued event
+    is replaced by the newest one so the client can detect the sequence gap and
+    request a snapshot without reconnecting. A write taking more than 5 seconds
+    closes the connection; reconnecting produces a complete fresh snapshot.
+servers:
+  local:
+    host: 127.0.0.1:8080
+    pathname: /api/v1/events
+    protocol: ws
+  production:
+    host: dcc-server.example:8443
+    pathname: /api/v1/events
+    protocol: wss
+channels:
+  events:
+    address: /api/v1/events
+    messages:
+      systemSnapshot: { $ref: '#/components/messages/SystemSnapshot' }
+      stationStatusChanged: { $ref: '#/components/messages/StationStatusChanged' }
+      locomotiveCreated: { $ref: '#/components/messages/LocomotiveCreated' }
+      locomotiveUpdated: { $ref: '#/components/messages/LocomotiveUpdated' }
+      locomotiveDeleted: { $ref: '#/components/messages/LocomotiveDeleted' }
+      locomotiveControlAcquired: { $ref: '#/components/messages/LocomotiveControlAcquired' }
+      locomotiveControlTransferred: { $ref: '#/components/messages/LocomotiveControlTransferred' }
+      locomotiveControlExpired: { $ref: '#/components/messages/LocomotiveControlExpired' }
+      locomotiveControlReleased: { $ref: '#/components/messages/LocomotiveControlReleased' }
+      locomotiveSpeedChanged: { $ref: '#/components/messages/LocomotiveSpeedChanged' }
+      locomotiveFunctionChanged: { $ref: '#/components/messages/LocomotiveFunctionChanged' }
+      trackPowerChanged: { $ref: '#/components/messages/TrackPowerChanged' }
+      trackEmergencyStop: { $ref: '#/components/messages/TrackEmergencyStop' }
+      blockOccupancyChanged: { $ref: '#/components/messages/BlockOccupancyChanged' }
+      turnoutStateChanged: { $ref: '#/components/messages/TurnoutStateChanged' }
+      turnoutCommanded: { $ref: '#/components/messages/TurnoutCommanded' }
+      turnoutCommandFailed: { $ref: '#/components/messages/TurnoutCommandFailed' }
+      routeReserved: { $ref: '#/components/messages/RouteReserved' }
+      routeActivated: { $ref: '#/components/messages/RouteActivated' }
+      routeReleased: { $ref: '#/components/messages/RouteReleased' }
+      rollingStockImported: { $ref: '#/components/messages/RollingStockImported' }
+      layoutImported: { $ref: '#/components/messages/LayoutImported' }
+      clientHeartbeat: { $ref: '#/components/messages/ClientHeartbeat' }
+      clientSnapshotRequest: { $ref: '#/components/messages/ClientSnapshotRequest' }
+operations:
+  receiveEvents:
+    action: receive
+    channel: { $ref: '#/channels/events' }
+    messages:
+      - $ref: '#/channels/events/messages/systemSnapshot'
+      - $ref: '#/channels/events/messages/stationStatusChanged'
+      - $ref: '#/channels/events/messages/locomotiveCreated'
+      - $ref: '#/channels/events/messages/locomotiveUpdated'
+      - $ref: '#/channels/events/messages/locomotiveDeleted'
+      - $ref: '#/channels/events/messages/locomotiveControlAcquired'
+      - $ref: '#/channels/events/messages/locomotiveControlTransferred'
+      - $ref: '#/channels/events/messages/locomotiveControlExpired'
+      - $ref: '#/channels/events/messages/locomotiveControlReleased'
+      - $ref: '#/channels/events/messages/locomotiveSpeedChanged'
+      - $ref: '#/channels/events/messages/locomotiveFunctionChanged'
+      - $ref: '#/channels/events/messages/trackPowerChanged'
+      - $ref: '#/channels/events/messages/trackEmergencyStop'
+      - $ref: '#/channels/events/messages/blockOccupancyChanged'
+      - $ref: '#/channels/events/messages/turnoutStateChanged'
+      - $ref: '#/channels/events/messages/turnoutCommanded'
+      - $ref: '#/channels/events/messages/turnoutCommandFailed'
+      - $ref: '#/channels/events/messages/routeReserved'
+      - $ref: '#/channels/events/messages/routeActivated'
+      - $ref: '#/channels/events/messages/routeReleased'
+      - $ref: '#/channels/events/messages/rollingStockImported'
+      - $ref: '#/channels/events/messages/layoutImported'
+  sendHeartbeat:
+    action: send
+    channel: { $ref: '#/channels/events' }
+    messages:
+      - $ref: '#/channels/events/messages/clientHeartbeat'
+  requestSnapshot:
+    action: send
+    channel: { $ref: '#/channels/events' }
+    messages:
+      - $ref: '#/channels/events/messages/clientSnapshotRequest'
+components:
+  schemas:
+    EventEnvelope:
+      type: object
+      required: [type, sequence, timestamp, payload]
+      properties:
+        type: { type: string }
+        sequence: { type: integer, minimum: 1 }
+        timestamp: { type: string, format: date-time }
+        payload: { type: object }
+    StationCapabilities:
+      type: object
+      required: [driver, trackPower, locomotiveControl, functions, maxFunctionNumber, accessoryControl, feedback]
+      properties:
+        driver: { type: string, enum: [simulator, dccex, z21] }
+        trackPower: { type: boolean }
+        locomotiveControl: { type: boolean }
+        functions: { type: integer, minimum: 0 }
+        maxFunctionNumber: { type: integer, minimum: 0 }
+        accessoryControl: { type: boolean }
+        feedback: { type: boolean }
+    StationStatus:
+      type: object
+      required:
+        - connectivity
+        - trackPower
+        - emergencyStop
+        - shortCircuit
+        - programmingMode
+        - mainCurrentMilliAmps
+        - programmingCurrentMilliAmps
+        - filteredMainCurrentMilliAmps
+        - temperatureCelsius
+        - supplyVoltageMilliVolts
+        - trackVoltageMilliVolts
+        - highTemperature
+        - powerLost
+        - externalShortCircuit
+        - internalShortCircuit
+      properties:
+        connectivity: { type: string, enum: [online, degraded, offline] }
+        lastSeen: { type: string, format: date-time }
+        trackPower: { type: string, enum: [unknown, 'on', 'off'] }
+        emergencyStop: { type: boolean }
+        shortCircuit: { type: boolean }
+        programmingMode: { type: boolean }
+        mainCurrentMilliAmps: { type: integer }
+        programmingCurrentMilliAmps: { type: integer }
+        filteredMainCurrentMilliAmps: { type: integer }
+        temperatureCelsius: { type: integer }
+        supplyVoltageMilliVolts: { type: integer, minimum: 0 }
+        trackVoltageMilliVolts: { type: integer, minimum: 0 }
+        highTemperature: { type: boolean }
+        powerLost: { type: boolean }
+        externalShortCircuit: { type: boolean }
+        internalShortCircuit: { type: boolean }
+    LeasePayload:
+      type: object
+      required: [id, locomotiveId, userId, sessionId, state, acquiredAt, renewedAt, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        locomotiveId: { type: string }
+        userId: { type: string, format: uuid }
+        sessionId: { type: string, format: uuid }
+        state: { type: string, enum: [active, stopping, released] }
+        acquiredAt: { type: string, format: date-time }
+        renewedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        releaseAfter: { type: string, format: date-time }
+        releaseReason: { type: string }
+        heartbeatMillis: { type: integer, minimum: 0 }
+    LocomotiveControlState:
+      type: object
+      description: >-
+        Public control availability for a locomotive with a live lease. A
+        locomotive absent from locomotiveControlStates is free.
+      required: [locomotiveId, state, ownership]
+      properties:
+        locomotiveId: { type: string }
+        state: { type: string, enum: [active, stopping] }
+        ownership:
+          type: string
+          enum: [mine, same_user_other_session, other]
+        expiresAt: { type: string, format: date-time }
+        releaseAfter: { type: string, format: date-time }
+    Locomotive:
+      type: object
+      required: [id, name, dccAddress, addressKind, speedSteps]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        dccAddress: { type: integer, minimum: 1, maximum: 10239 }
+        addressKind: { type: string, enum: [short, long] }
+        speedSteps: { type: integer, enum: [14, 28, 128] }
+        manufacturer: { type: string }
+        model: { type: string }
+    Block:
+      type: object
+      required: [id, name, occupied, occupancy]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        occupied:
+          type: boolean
+          deprecated: true
+          description: Derived compatibility field; true only for occupied state.
+        occupancy: { $ref: '#/components/schemas/BlockOccupancy' }
+    OccupantRef:
+      type: object
+      required: [type, id]
+      properties:
+        type: { type: string }
+        id: { type: string }
+    BlockOccupancy:
+      type: object
+      required: [state, updatedAt]
+      properties:
+        state: { type: string, enum: [unknown, free, occupied] }
+        occupant: { $ref: '#/components/schemas/OccupantRef' }
+        updatedAt: { type: string, format: date-time }
+    AccessoryEndpoint:
+      type: object
+      required: [id, linearAddress]
+      properties:
+        id: { type: string, minLength: 1 }
+        linearAddress: { type: integer, minimum: 1, maximum: 2040 }
+        inverted: { type: boolean, default: false }
+    TurnoutPositionDefinition:
+      type: object
+      required: [id, endpoints]
+      properties:
+        id: { type: string, minLength: 1 }
+        label: { type: string }
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [position1, position2]
+    Turnout:
+      type: object
+      required: [id, name, kind, endpoints, positions, desiredPosition, reportedPosition, pending, reportedStatus, commandStatus]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [simple, three_way, double_slip, single_slip, custom] }
+        endpoints:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/AccessoryEndpoint' }
+        positions:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/TurnoutPositionDefinition' }
+        desiredPosition: { type: string, description: Empty when unknown. }
+        reportedPosition: { type: string, description: Empty when unknown or physically invalid. }
+        pending: { type: boolean }
+        reportedStatus: { type: string, enum: [known, unknown, invalid] }
+        reportQuality:
+          type: string
+          enum: [assumed, station, physical]
+          description: Lowest confidence among all endpoint observations.
+        commandStatus: { type: string, enum: [idle, pending, succeeded, failed, timeout] }
+        dccAddress: { type: integer, minimum: 1, deprecated: true }
+        desiredState: { type: string, enum: [straight, diverging, unknown], deprecated: true }
+        reportedState: { type: string, enum: [straight, diverging, unknown], deprecated: true }
+    Route:
+      type: object
+      required: [id, name, state]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        state: { type: string, enum: [idle, reserved, active] }
+        reservedBySession: { type: string }
+  messages:
+    SystemSnapshot:
+      name: system.snapshot
+      description: >-
+        Complete state required by an authenticated client. controlLeases
+        contains full control lease information only for leases owned by the
+        authenticated session. locomotiveControlStates contains public control
+        availability for all currently controlled locomotives, including
+        leases owned by other sessions. Absence from locomotiveControlStates
+        means that the locomotive is free.
+        topologyRevision and layoutPresentationRevision are independent cache
+        keys for GET /api/v1/topology and GET /api/v1/layout/presentation.
+      payload:
+        type: object
+        required: [type, sequence, capturedAt, payload]
+        properties:
+          type: { const: system.snapshot }
+          sequence:
+            type: integer
+            minimum: 0
+            description: Current global event sequence captured before the snapshot state is read.
+          capturedAt: { type: string, format: date-time }
+          payload:
+            type: object
+            required: [station, stationStatus, locomotives, controlLeases, locomotiveControlStates, blocks, turnouts, routes, topologyRevision, layoutPresentationRevision]
+            properties:
+              station: { $ref: '#/components/schemas/StationCapabilities' }
+              stationStatus: { $ref: '#/components/schemas/StationStatus' }
+              locomotives:
+                type: array
+                items: { $ref: '#/components/schemas/Locomotive' }
+              controlLeases:
+                description: Full control lease information for leases owned by the authenticated session.
+                type: array
+                items: { $ref: '#/components/schemas/LeasePayload' }
+              locomotiveControlStates:
+                description: >-
+                  Public locomotive control availability for all currently
+                  controlled locomotives, including leases owned by other sessions.
+                type: array
+                items: { $ref: '#/components/schemas/LocomotiveControlState' }
+              blocks:
+                type: array
+                items: { $ref: '#/components/schemas/Block' }
+              turnouts:
+                type: array
+                items: { $ref: '#/components/schemas/Turnout' }
+              routes:
+                type: array
+                items: { $ref: '#/components/schemas/Route' }
+              topologyRevision:
+                type: string
+                pattern: '^[0-9a-f]{64}$'
+                description: >-
+                  Revision returned by GET /api/v1/topology. Reload that resource
+                  when this value changes. After layout.imported, compare both
+                  revisions and reload only the changed resources.
+              layoutPresentationRevision:
+                type: string
+                pattern: '^[0-9a-f]{64}$'
+                examples: [66d1f79391497b6a68e617899f73e89ea16d900720a765039a2a15203677ad97]
+                description: >-
+                  Revision returned by GET /api/v1/layout/presentation. Reload
+                  that resource when this value changes, including after
+                  layout.imported. Runtime state does not affect this value.
+    StationStatusChanged:
+      name: station.status.changed
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: station.status.changed }
+              payload:
+                type: object
+                required: [connectivity]
+                properties:
+                  connectivity: { type: string, enum: [online, degraded, offline] }
+                  lastSeen: { type: string, format: date-time }
+    ClientHeartbeat:
+      name: client.heartbeat
+      description: >-
+        Updates session activity without extending access-token expiry and without
+        consuming a server event sequence. It does not renew locomotive leases.
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { const: client.heartbeat }
+    ClientSnapshotRequest:
+      name: client.snapshot_request
+      description: Requests a fresh system snapshot, typically after the client detects a sequence gap.
+      payload:
+        type: object
+        required: [type]
+        properties:
+          type: { const: client.snapshot_request }
+          lastSequence:
+            type: integer
+            minimum: 0
+            description: Last sequence successfully applied by the client. It is diagnostic in the current version.
+    LocomotiveCreated:
+      name: locomotive.created
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.created }
+              payload: { $ref: '#/components/schemas/Locomotive' }
+    LocomotiveUpdated:
+      name: locomotive.updated
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.updated }
+              payload: { $ref: '#/components/schemas/Locomotive' }
+    LocomotiveDeleted:
+      name: locomotive.deleted
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.deleted }
+              payload:
+                type: object
+                required: [locomotiveId]
+                properties:
+                  locomotiveId: { type: string }
+    LocomotiveControlAcquired:
+      name: locomotive.control.acquired
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.control.acquired }
+              payload: { $ref: '#/components/schemas/LeasePayload' }
+    LocomotiveControlTransferred:
+      name: locomotive.control.transferred
+      description: >-
+        Reports an explicit same-user transfer after the locomotive has been
+        stopped and the lease ownership has changed atomically. All connected
+        sessions receive the same event and can update their ownership view.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.control.transferred }
+              payload:
+                type: object
+                required: [locomotiveId, leaseId, userId, fromSessionId, toSessionId, state, renewedAt, expiresAt]
+                properties:
+                  locomotiveId: { type: string }
+                  leaseId: { type: string, format: uuid }
+                  userId: { type: string, format: uuid }
+                  fromSessionId: { type: string, format: uuid }
+                  toSessionId: { type: string, format: uuid }
+                  state: { const: active }
+                  renewedAt: { type: string, format: date-time }
+                  expiresAt: { type: string, format: date-time }
+    LocomotiveControlExpired:
+      name: locomotive.control.expired
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.control.expired }
+              payload:
+                type: object
+                required: [leaseId, locomotiveId, reason, releaseAfter]
+                properties:
+                  leaseId: { type: string, format: uuid }
+                  locomotiveId: { type: string }
+                  reason: { type: string, enum: [heartbeat_timeout, client_release] }
+                  releaseAfter: { type: string, format: date-time }
+    LocomotiveControlReleased:
+      name: locomotive.control.released
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.control.released }
+              payload: { $ref: '#/components/schemas/LeasePayload' }
+    LocomotiveSpeedChanged:
+      name: locomotive.speed.changed
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.speed.changed }
+              payload:
+                type: object
+                required: [locomotiveId, speed, direction, userId]
+                properties:
+                  locomotiveId: { type: string }
+                  speed: { type: integer, minimum: 0, maximum: 100 }
+                  direction: { type: string, enum: [forward, reverse] }
+                  userId: { type: string, format: uuid }
+    LocomotiveFunctionChanged:
+      name: locomotive.function.changed
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: locomotive.function.changed }
+              payload:
+                type: object
+                required: [locomotiveId, function, enabled]
+                properties:
+                  locomotiveId: { type: string }
+                  function: { type: integer, minimum: 0 }
+                  enabled: { type: boolean }
+    TrackPowerChanged:
+      name: track.power.changed
+      description: >-
+        Reports a power command or observed power change. A successful power-on is
+        the explicit action that clears the server emergency-stop interlock.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: track.power.changed }
+              payload:
+                type: object
+                required: [enabled]
+                properties:
+                  enabled: { type: boolean }
+                  userId: { type: string, format: uuid }
+    TrackEmergencyStop:
+      name: track.emergency_stop
+      description: >-
+        Reports activation of the emergency-stop interlock, or its release after a
+        successful explicit power-on command.
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: track.emergency_stop }
+              payload:
+                type: object
+                required: [active]
+                properties:
+                  active: { type: boolean }
+                  userId: { type: string, format: uuid }
+    BlockOccupancyChanged:
+      name: block.occupancy.changed
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: block.occupancy.changed }
+              payload:
+                type: object
+                required: [blockId, state, updatedAt, occupied]
+                properties:
+                  blockId: { type: string }
+                  state: { type: string, enum: [unknown, free, occupied] }
+                  occupant: { $ref: '#/components/schemas/OccupantRef' }
+                  updatedAt: { type: string, format: date-time }
+                  occupied:
+                    type: boolean
+                    deprecated: true
+                    description: Derived compatibility field; true only for occupied state.
+    TurnoutStateChanged:
+      name: turnout.state.changed
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: turnout.state.changed }
+              payload:
+                type: object
+                required: [turnoutId, desiredPosition, reportedPosition, reportedStatus, pending, commandStatus]
+                properties:
+                  turnoutId: { type: string }
+                  desiredPosition: { type: string }
+                  reportedPosition:
+                    type: string
+                    description: Empty when the physical endpoint vector is unknown or invalid.
+                  reportedStatus: { type: string, enum: [known, unknown, invalid] }
+                  pending: { type: boolean }
+                  reportQuality: { type: string, enum: [assumed, station, physical] }
+                  commandStatus: { type: string, enum: [idle, pending, succeeded, failed, timeout] }
+      examples:
+        - payload:
+            type: turnout.state.changed
+            sequence: 153
+            occurredAt: '2026-09-01T12:00:00Z'
+            payload:
+              turnoutId: T3
+              desiredPosition: right
+              reportedPosition: straight
+              reportedStatus: known
+              pending: true
+              reportQuality: station
+              commandStatus: pending
+    TurnoutCommanded:
+      name: turnout.commanded
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: turnout.commanded }
+              payload:
+                type: object
+                required: [turnoutId, targetPosition]
+                properties:
+                  turnoutId: { type: string }
+                  targetPosition: { type: string }
+      examples:
+        - payload:
+            type: turnout.commanded
+            sequence: 152
+            occurredAt: '2026-09-01T11:59:59Z'
+            payload: { turnoutId: T3, targetPosition: right }
+    TurnoutCommandFailed:
+      name: turnout.command.failed
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: turnout.command.failed }
+              payload:
+                type: object
+                required: [turnoutId, targetPosition, reason]
+                properties:
+                  turnoutId: { type: string }
+                  targetPosition: { type: string }
+                  reason:
+                    type: string
+                    enum: [confirmation_timeout, confirmation_interrupted, driver_error, unsafe_transition, invalid_definition]
+      examples:
+        - payload:
+            type: turnout.command.failed
+            sequence: 154
+            occurredAt: '2026-09-01T12:00:02Z'
+            payload:
+              turnoutId: T3
+              targetPosition: right
+              reason: confirmation_timeout
+    RouteReserved:
+      name: route.reserved
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: route.reserved }
+              payload:
+                type: object
+                required: [routeId, sessionId]
+                properties:
+                  routeId: { type: string }
+                  sessionId: { type: string, format: uuid }
+    RouteActivated:
+      name: route.activated
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: route.activated }
+              payload:
+                type: object
+                required: [routeId]
+                properties:
+                  routeId: { type: string }
+    RouteReleased:
+      name: route.released
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: route.released }
+              payload:
+                type: object
+                required: [routeId]
+                properties:
+                  routeId: { type: string }
+    RollingStockImported:
+      name: rolling-stock.imported
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: rolling-stock.imported }
+              payload:
+                type: object
+                required: [count, replace, userId]
+                properties:
+                  count: { type: integer, minimum: 0 }
+                  replace: { type: boolean }
+                  userId: { type: string, format: uuid }
+    LayoutImported:
+      name: layout.imported
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/EventEnvelope'
+          - type: object
+            properties:
+              type: { const: layout.imported }
+              payload:
+                type: object
+                required: [blocks, turnouts, routes, replace, userId]
+                properties:
+                  blocks: { type: integer, minimum: 0 }
+                  turnouts: { type: integer, minimum: 0 }
+                  routes: { type: integer, minimum: 0 }
+                  replace: { type: boolean }
+                  userId: { type: string, format: uuid }
