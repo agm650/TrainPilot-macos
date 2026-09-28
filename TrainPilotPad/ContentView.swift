@@ -1,6 +1,9 @@
 import SwiftUI
+import TrainPilotCore
 
 struct TrainPilotPadRootView: View {
+    let preferences: any ServerPreferences
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {

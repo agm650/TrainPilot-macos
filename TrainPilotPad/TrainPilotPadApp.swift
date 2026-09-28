@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import TrainPilotCore
 
 @main
 struct TrainPilotPadApp: App {
+    private let preferences = UserDefaultsServerPreferences()
+
     var body: some Scene {
         WindowGroup {
-            TrainPilotPadRootView()
+            TrainPilotPadRootView(preferences: preferences)
         }
     }
 }

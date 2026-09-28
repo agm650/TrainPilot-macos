@@ -66,6 +66,8 @@
 		C7AFB253306833590016FE77 /* LayoutPublicationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */; };
 		C7AFB255306833960016FE77 /* LayoutArchiveSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */; };
 		C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */; };
+		C7F59235306A85270034214E /* TrainPilotCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7F5921C306A822D0034214E /* TrainPilotCore.framework */; };
+		C7F59236306A85270034214E /* TrainPilotCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C7F5921C306A822D0034214E /* TrainPilotCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,7 +78,28 @@
 			remoteGlobalIDString = 000000000000000000000006;
 			remoteInfo = TrainPilot;
 		};
+		C7F59237306A85270034214E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C7F5921B306A822D0034214E;
+			remoteInfo = TrainPilotCore;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C7F59239306A85270034214E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C7F59236306A85270034214E /* TrainPilotCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000008 /* TrainPilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrainPilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -146,10 +169,20 @@
 		C7F59229306A82F40034214E /* TrainPilot Cab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TrainPilot Cab.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C7F5923B306A85AC0034214E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C7F59228306A82F40034214E /* TrainPilotPad */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C7F59214306A80120034214E /* API */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = API; sourceTree = "<group>"; };
 		C7F5921D306A822D0034214E /* TrainPilotCore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainPilotCore; sourceTree = "<group>"; };
-		C7F5922A306A82F40034214E /* TrainPilotPad */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = TrainPilotPad; sourceTree = "<group>"; };
+		C7F5922A306A82F40034214E /* TrainPilotPad */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C7F5923B306A85AC0034214E /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = TrainPilotPad; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,6 +212,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7F59235306A85270034214E /* TrainPilotCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -198,6 +232,7 @@
 				000000000000000000000005 /* Products */,
 				00000000000000000000001B /* XCTest.framework */,
 				C72374A9304F6C260054808A /* TrainPilotCab.icns */,
+				C7F59234306A85270034214E /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -411,6 +446,13 @@
 			path = "LayoutEditor 2";
 			sourceTree = "<group>";
 		};
+		C7F59234306A85270034214E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -489,10 +531,12 @@
 				C7F59225306A82F40034214E /* Sources */,
 				C7F59226306A82F40034214E /* Frameworks */,
 				C7F59227306A82F40034214E /* Resources */,
+				C7F59239306A85270034214E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C7F59238306A85270034214E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C7F5922A306A82F40034214E /* TrainPilotPad */,
@@ -675,6 +719,11 @@
 			isa = PBXTargetDependency;
 			target = 000000000000000000000006 /* TrainPilot */;
 			targetProxy = 00000000000000000000001A /* PBXContainerItemProxy */;
+		};
+		C7F59238306A85270034214E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C7F5921B306A822D0034214E /* TrainPilotCore */;
+			targetProxy = C7F59237306A85270034214E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1030,12 +1079,18 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrainPilotPad/Info.plist;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TrainPilot utilise le réseau local pour se connecter au serveur de commande de votre réseau ferroviaire.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -1098,12 +1153,18 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TrainPilotPad/Info.plist;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "TrainPilot utilise le réseau local pour se connecter au serveur de commande de votre réseau ferroviaire.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
