@@ -1,6 +1,17 @@
 import SwiftUI
 import TrainPilotCore
 
+private enum PadCabPalette {
+    static let background = Color(red: 0.06, green: 0.07, blue: 0.07)
+    static let panel = Color(red: 0.10, green: 0.11, blue: 0.11)
+    static let panelRaised = Color(red: 0.16, green: 0.17, blue: 0.16)
+    static let metal = Color(red: 0.32, green: 0.33, blue: 0.31)
+    static let label = Color(red: 0.92, green: 0.76, blue: 0.20)
+    static let gauge = Color(red: 0.92, green: 0.92, blue: 0.85)
+    static let action = Color(red: 0.10, green: 0.43, blue: 0.82)
+    static let danger = Color(red: 0.84, green: 0.16, blue: 0.14)
+}
+
 struct TrainPilotPadRootView: View {
     @StateObject private var model: TrainPilotPadModel
 
@@ -23,43 +34,139 @@ private struct PadLoginView: View {
     @State private var password = ""
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Serveur") {
-                    TextField("Adresse du serveur", text: $model.serverAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 30) {
+                    PadLoginHeader()
+                    PadLoginForm(
+                        serverAddress: $model.serverAddress,
+                        username: $username,
+                        password: $password,
+                        errorMessage: model.errorMessage,
+                        connect: connect
+                    )
+                    PadLoginFooter()
                 }
-
-                Section("Compte") {
-                    TextField("Nom d’utilisateur", text: $username)
-                        .textInputAutocapitalization(.never)
-                    SecureField("Mot de passe", text: $password)
-                }
-
-                Section {
-                    Button("Connexion") {
-                        Task {
-                            await model.connect(username: username, password: password)
-                        }
-                    }
-                    .disabled(username.isEmpty || password.isEmpty)
-                }
-
-                if let errorMessage = model.errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                    }
-                }
+                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 40)
             }
-            .navigationTitle("TrainPilot Cab")
-            .onAppear {
-                username = model.preferences.username
-            }
+            .background(PadCabPalette.background)
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .preferredColorScheme(.dark)
+        .onAppear {
+            username = model.preferences.username
         }
     }
 
+    private func connect() {
+        Task {
+            await model.connect(username: username, password: password)
+        }
+    }
+}
+
+private struct PadLoginHeader: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "tram.fill")
+                .font(.system(size: 58, weight: .semibold))
+                .foregroundStyle(PadCabPalette.label)
+                .accessibilityHidden(true)
+            Text("TrainPilot")
+                .font(.largeTitle.bold())
+                .foregroundStyle(PadCabPalette.gauge)
+            Text("Poste de conduite iPad")
+                .font(.headline)
+                .foregroundStyle(PadCabPalette.metal)
+        }
+    }
+}
+
+private struct PadLoginForm: View {
+    @Binding var serverAddress: String
+    @Binding var username: String
+    @Binding var password: String
+    let errorMessage: String?
+    let connect: () -> Void
+
+    private var canConnect: Bool {
+        !serverAddress.isEmpty && !username.isEmpty && !password.isEmpty
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            PadLoginFieldLabel(title: "Serveur") {
+                TextField("Adresse du serveur", text: $serverAddress)
+                    .keyboardType(.URL)
+                    .textContentType(.URL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+            PadLoginFieldLabel(title: "Utilisateur") {
+                TextField("Nom d’utilisateur", text: $username)
+                    .textContentType(.username)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+            PadLoginFieldLabel(title: "Mot de passe") {
+                SecureField("Mot de passe", text: $password)
+                    .textContentType(.password)
+                    .onSubmit(connect)
+            }
+
+            Button(action: connect) {
+                Text("Connexion")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(PadCabPalette.action)
+            .disabled(!canConnect)
+
+            Text(errorMessage ?? " ")
+                .font(.footnote)
+                .foregroundStyle(PadCabPalette.danger)
+                .opacity(errorMessage == nil ? 0 : 1)
+                .accessibilityHidden(errorMessage == nil)
+        }
+        .padding(28)
+        .frame(maxWidth: 560)
+        .background(PadCabPalette.panelRaised, in: RoundedRectangle(cornerRadius: 18))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(PadCabPalette.metal.opacity(0.8), lineWidth: 1)
+        }
+    }
+}
+
+private struct PadLoginFieldLabel<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.bold())
+                .foregroundStyle(PadCabPalette.label)
+            content
+                .padding(.horizontal, 12)
+                .frame(minHeight: 46)
+                .foregroundStyle(.black)
+                .background(PadCabPalette.gauge, in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+}
+
+private struct PadLoginFooter: View {
+    var body: some View {
+        Text("Le mot de passe n’est pas enregistré. Le jeton de renouvellement est stocké dans le Trousseau iPadOS.")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(PadCabPalette.metal)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 560)
+    }
 }
 
 private struct PadMainView: View {
