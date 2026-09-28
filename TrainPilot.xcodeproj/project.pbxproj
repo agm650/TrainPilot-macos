@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -144,6 +144,10 @@
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C7F59214306A80120034214E /* API */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = API; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		00000000000000000000000B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -166,6 +170,7 @@
 		000000000000000000000002 = {
 			isa = PBXGroup;
 			children = (
+				C7F59214306A80120034214E /* API */,
 				C7C50E2D30446EF1007036B2 /* AGENTS.md */,
 				C7C50E2F30446F29007036B2 /* RTK.md */,
 				000000000000000000000003 /* TrainPilot */,
