@@ -140,19 +140,9 @@ private struct PadSectionView: View {
         case .library:
             PadLibraryView(model: model)
         case .layout:
-            PadPlaceholderView(
-                title: "Layout",
-                message: "Le plan du réseau sera affiché ici en lecture seule.",
-                systemImage: "point.topleft.down.to.point.bottomright.curvepath"
-            )
+            PadLayoutView(model: model)
         case .driving:
-            PadPlaceholderView(
-                title: "Conduite",
-                message: model.canDrive
-                    ? "Les commandes de conduite sont disponibles."
-                    : "La conduite nécessite une centrale en ligne et une voie alimentée.",
-                systemImage: "gauge.with.dots.needle.67percent"
-            )
+            PadDrivingView(model: model)
         case .settings:
             PadPlaceholderView(
                 title: "Réglages",

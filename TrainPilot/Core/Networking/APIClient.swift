@@ -331,6 +331,15 @@ actor APIClient: LayoutDataSource {
         )
     }
 
+    func takeover(leaseID: String) async throws -> ControlLease {
+        try await request(
+            path: "/api/v1/control-leases/\(urlComponent(leaseID))/takeover",
+            method: "POST",
+            expected: [200],
+            as: ControlLease.self
+        )
+    }
+
     func release(leaseID: String) async throws {
         try await requestNoContent(
             path: "/api/v1/control-leases/\(urlComponent(leaseID))",
