@@ -172,6 +172,7 @@ struct TopologyRenderer: View {
     let gridSpacing: Double
     let showsGrid: Bool
     var runtime: TopologyRuntimeState = .empty
+    var selectedElements: Set<LayoutEditorSelection> = []
 
     var body: some View {
         Canvas(rendersAsynchronously: true) { context, size in
@@ -180,6 +181,10 @@ struct TopologyRenderer: View {
             }
             drawBlockOverlays(context: &context)
             drawOccupancy(context: &context)
+            for track in plan.tracks where selectedElements.contains(.trackSection(track.id)) {
+                context.stroke(trackPath(track), with: .color(.accentColor.opacity(0.65)),
+                               style: StrokeStyle(lineWidth: 8 * transform.zoom, lineCap: .round))
+            }
             drawTracks(context: &context)
             drawTurnouts(context: &context)
 
@@ -290,6 +295,10 @@ struct TopologyRenderer: View {
                 width: radius * 2,
                 height: radius * 2
             )
+            if selectedElements.contains(.turnout(turnout.id)) {
+                context.stroke(Path(ellipseIn: rect.insetBy(dx: -4, dy: -4)),
+                               with: .color(.accentColor), lineWidth: 3)
+            }
             for style in turnout.blockStyles {
                 context.fill(
                     Path(ellipseIn: rect.insetBy(dx: -6, dy: -6)),

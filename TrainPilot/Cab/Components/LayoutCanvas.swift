@@ -4,6 +4,11 @@ struct LayoutCanvas: View {
     let topology: TopologyDefinition
     let presentation: LayoutPresentationDefinition
     let mode: LayoutInteractionMode
+    var locksToGrid = false
+    var pansWithMouse = false
+    var selectedElements: Set<LayoutEditorSelection> = []
+    var selectionRectangle: (LayoutPoint, LayoutPoint)?
+    var onEditorGestureChanged: ((LayoutPoint, LayoutPoint, LayoutViewportTransform) -> Void)?
     var runtime: TopologyRuntimeState = .empty
     var onTurnoutSelected: ((String) -> Void)?
     var onEditorGestureEnded: ((
@@ -14,8 +19,8 @@ struct LayoutCanvas: View {
 
     @AppStorage("layoutEditorShowsGrid") private var showsGrid = true
     @AppStorage("layoutEditorSnapToGrid") private var snapToGrid = true
-    @State private var transform = LayoutViewportTransform()
-    @State private var panAtGestureStart = LayoutViewportTransform()
+    @State private var transform = LayoutViewportTransform(zoom: LayoutViewportTransform.canvasBaseZoom)
+    @State private var panAtGestureStart = LayoutViewportTransform(zoom: LayoutViewportTransform.canvasBaseZoom)
     @GestureState private var magnification = 1.0
 
     var body: some View {
@@ -29,27 +34,41 @@ struct LayoutCanvas: View {
                     transform: effectiveTransform(in: geometry.size),
                     mode: mode,
                     gridSpacing: presentation.gridSpacing,
-                    showsGrid: showsGrid,
-                    runtime: runtime
+                    showsGrid: showsGrid || locksToGrid,
+                    runtime: runtime,
+                    selectedElements: selectedElements
                 )
                 .contentShape(Rectangle())
                 .gesture(primaryDragGesture)
                 .simultaneousGesture(magnificationGesture(in: geometry.size))
 
+                if let rectangle = selectionRectangle {
+                    let viewport = effectiveTransform(in: geometry.size)
+                    let start = viewport.canvasPoint(for: rectangle.0)
+                    let end = viewport.canvasPoint(for: rectangle.1)
+                    Path(CGRect(
+                        x: min(start.x, end.x), y: min(start.y, end.y),
+                        width: abs(end.x - start.x), height: abs(end.y - start.y)
+                    ))
+                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 1, dash: [5, 3]))
+                    .allowsHitTesting(false)
+                }
+
                 turnoutHitTargets(in: geometry.size)
 
                 LayoutCanvasControls(
-                    zoom: transform.zoom,
+                    zoom: transform.zoom / LayoutViewportTransform.canvasBaseZoom,
                     showsGrid: $showsGrid,
                     snapToGrid: $snapToGrid,
-                    showsSnapControl: mode != .operationalReadOnly,
-                    zoomOut: { setZoom(transform.zoom - 0.25, in: geometry.size) },
-                    resetZoom: { setZoom(1, in: geometry.size) },
-                    zoomIn: { setZoom(transform.zoom + 0.25, in: geometry.size) }
+                    showsSnapControl: mode != .operationalReadOnly && !locksToGrid,
+                    zoomOut: { setZoom(transform.zoom - 0.25 * LayoutViewportTransform.canvasBaseZoom, in: geometry.size) },
+                    resetZoom: { setZoom(LayoutViewportTransform.canvasBaseZoom, in: geometry.size) },
+                    zoomIn: { setZoom(transform.zoom + 0.25 * LayoutViewportTransform.canvasBaseZoom, in: geometry.size) }
                 )
                 .padding(12)
             }
             .background(Color.black.opacity(0.12))
+            .clipped()
         }
     }
 
@@ -80,14 +99,21 @@ struct LayoutCanvas: View {
     private var primaryDragGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
-                guard onEditorGestureEnded == nil else { return }
+                guard pansWithMouse || onEditorGestureEnded == nil else {
+                    onEditorGestureChanged?(
+                        transform.layoutPoint(for: value.startLocation),
+                        transform.layoutPoint(for: value.location),
+                        transform
+                    )
+                    return
+                }
                 transform = panAtGestureStart.pannedBy(
                     x: value.translation.width,
                     y: value.translation.height
                 )
             }
             .onEnded { value in
-                if let onEditorGestureEnded {
+                if !pansWithMouse, let onEditorGestureEnded {
                     onEditorGestureEnded(
                         transform.layoutPoint(for: value.startLocation),
                         transform.layoutPoint(for: value.location),

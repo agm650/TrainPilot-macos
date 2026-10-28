@@ -183,6 +183,15 @@ extension LayoutEditorController {
                 .ports
                 .map(\.nodeId) ?? []
         )
+        let connectedTracks = document.topology.trackSections.filter {
+            portNodeIDs.contains($0.nodeAId) || portNodeIDs.contains($0.nodeBId)
+        }
+        let connectedTurnouts = document.topology.turnoutTopologies.filter {
+            $0.turnoutId != id && $0.ports.contains(where: { portNodeIDs.contains($0.nodeId) })
+        }
+        guard connectedTracks.isEmpty && connectedTurnouts.isEmpty else {
+            throw LayoutTileError.connectedEquipment
+        }
         let turnouts = document.presentation.turnouts.map { turnout in
             guard turnout.turnoutId == id else { return turnout }
             return LayoutTurnoutPresentation(
@@ -291,7 +300,7 @@ extension LayoutEditorController {
     }
 }
 
-private struct TurnoutTemplate {
+struct TurnoutTemplate {
     let kind: TurnoutKind
     let endpoints: [AccessoryEndpoint]
     let portIDs: [String]

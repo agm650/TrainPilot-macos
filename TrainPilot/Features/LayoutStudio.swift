@@ -316,6 +316,8 @@ struct LayoutStudioView: View {
         VStack(spacing: 0) {
             LayoutStudioToolbar(session: session)
             Divider()
+            LayoutTilePalette(controller: session.controller)
+            Divider()
             HSplitView {
                 LayoutStudioCanvas(controller: session.controller)
                     .frame(minWidth: 600, minHeight: 460)
@@ -356,40 +358,18 @@ private struct LayoutStudioToolbar: View {
             } label: {
                 Image(systemName: "cursorarrow")
             }
-            .help("Sélection")
+            .help("Sélection : Maj-clic pour ajouter, glisser dans le vide pour encadrer")
             .tint(controller.tool == .select ? .accentColor : nil)
 
-            Menu {
-                Button("Section droite") {
-                    controller.selectTrackCreationStyle(.straight)
-                }
-                Button("Section courbe") {
-                    controller.selectTrackCreationStyle(.curved)
-                }
+            Button {
+                controller.selectTool(.pan)
             } label: {
-                Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+                Image(systemName: "hand.draw")
             }
-            .help("Créer une section de voie")
-            .tint(controller.tool == .track ? .accentColor : nil)
+            .help("Déplacer le plan : cliquez et glissez")
+            .tint(controller.tool == .pan ? .accentColor : nil)
 
-            Menu {
-                Button("Aiguille à gauche") {
-                    controller.selectTurnoutCreationStyle(.simpleLeft)
-                }
-                Button("Aiguille à droite") {
-                    controller.selectTurnoutCreationStyle(.simpleRight)
-                }
-                Button("Aiguille triple") {
-                    controller.selectTurnoutCreationStyle(.threeWay)
-                }
-                Button("TJD") {
-                    controller.selectTurnoutCreationStyle(.doubleSlip)
-                }
-            } label: {
-                Image(systemName: "arrow.triangle.branch")
-            }
-            .help("Créer un aiguillage")
-            .tint(controller.tool == .turnout ? .accentColor : nil)
+
 
             Button {
                 controller.selectTool(.block)
@@ -430,6 +410,11 @@ private struct LayoutStudioCanvas: View {
     @ObservedObject var controller: LayoutEditorController
     @ObservedObject private var document: LayoutEditorDocument
     @AppStorage("layoutEditorSnapToGrid") private var snapToGrid = true
+    @State private var selectionGestureActive = false
+    @State private var movingSelection = false
+    @State private var extendsSelection = false
+    @State private var selectionBeforeGesture: Set<LayoutEditorSelection> = []
+    @State private var selectionRectangle: (LayoutPoint, LayoutPoint)?
 
     init(controller: LayoutEditorController) {
         self.controller = controller
@@ -440,9 +425,61 @@ private struct LayoutStudioCanvas: View {
         LayoutCanvas(
             topology: document.topology,
             presentation: document.presentation,
-            mode: .editor(showHandles: true),
+            mode: .editor(showHandles: controller.tool != .tile),
+            locksToGrid: controller.tool == .tile,
+            pansWithMouse: controller.tool == .pan,
+            selectedElements: controller.selectedElements,
+            selectionRectangle: selectionRectangle,
+            onEditorGestureChanged: handleGestureChanged,
             onEditorGestureEnded: handleGesture
         )
+        .onDisappear {
+            controller.cancelDrag()
+            selectionGestureActive = false
+            movingSelection = false
+            selectionRectangle = nil
+        }
+    }
+
+    private func handleGestureChanged(
+        start: LayoutPoint,
+        end: LayoutPoint,
+        transform: LayoutViewportTransform
+    ) {
+        guard controller.tool == .select else { return }
+        if !selectionGestureActive {
+            selectionGestureActive = true
+            extendsSelection = NSEvent.modifierFlags.contains(.shift)
+            selectionBeforeGesture = controller.selectedElements
+            let hit = controller.element(at: start, tolerance: 8 / transform.zoom, includingNodes: false)
+            if let hit {
+                if extendsSelection {
+                    var selected = controller.selectedElements
+                    if selected.contains(hit) { selected.remove(hit) } else { selected.insert(hit) }
+                    controller.selectElements(selected)
+                } else if !controller.selectedElements.contains(hit) {
+                    controller.select(hit)
+                }
+                movingSelection = !extendsSelection
+                if movingSelection { controller.beginDrag() }
+            } else {
+                movingSelection = false
+                if !extendsSelection { controller.select(nil) }
+            }
+        }
+        if movingSelection {
+            controller.updateSelectionDrag(
+                delta: start.distance(to: end) > 3 / transform.zoom
+                    ? LayoutPoint(x: end.x - start.x, y: end.y - start.y)
+                    : LayoutPoint(x: 0, y: 0),
+                snapEnabled: snapToGrid && !NSEvent.modifierFlags.contains(.option)
+            )
+        } else if start.distance(to: end) > 3 / transform.zoom,
+                  controller.element(at: start, tolerance: 8 / transform.zoom, includingNodes: false) == nil {
+            selectionRectangle = (start, end)
+            let enclosed = controller.elements(inRectangleFrom: start, to: end)
+            controller.selectElements(extendsSelection ? selectionBeforeGesture.union(enclosed) : enclosed)
+        }
     }
 
     private func handleGesture(
@@ -453,10 +490,17 @@ private struct LayoutStudioCanvas: View {
         let optionKeyPressed = NSEvent.modifierFlags.contains(.option)
         switch controller.tool {
         case .select:
-            controller.selectElement(
-                at: end,
-                tolerance: 10 / transform.zoom
-            )
+            handleGestureChanged(start: start, end: end, transform: transform)
+            if movingSelection {
+                controller.endDrag()
+            } else if !extendsSelection && start.distance(to: end) <= 3 / transform.zoom {
+                controller.selectElement(at: end, tolerance: 8 / transform.zoom)
+            }
+            selectionGestureActive = false
+            movingSelection = false
+            selectionRectangle = nil
+        case .pan:
+            break
         case .track:
             guard start.distance(to: end) >= 4 / transform.zoom else { return }
             controller.createTrack(
@@ -473,6 +517,12 @@ private struct LayoutStudioCanvas: View {
                 snapEnabled: snapToGrid,
                 optionKeyPressed: optionKeyPressed
             )
+        case .tile:
+            do {
+                try controller.placeTile(at: end)
+            } catch {
+                controller.tilePlacementMessage = error.localizedDescription
+            }
         case .block:
             break
         }
@@ -507,6 +557,9 @@ private struct LayoutStudioInspector: View {
     }
 
     private var selectionDescription: String {
+        if controller.selectedElements.count > 1 {
+            return "\(controller.selectedElements.count) éléments sélectionnés"
+        }
         switch controller.inspectorState {
         case .noSelection: return "Aucune sélection"
         case .trackSection(let id): return "Voie \(id)"
@@ -526,29 +579,17 @@ private struct LayoutStudioSelectionControls: View {
             case .trackSection(let id):
                 HStack {
                     Button("Droite") {
-                        try? controller.convertTrackSegmentToLine(
-                            sectionID: id,
-                            segmentIndex: 0
-                        )
+                        try? controller.convertTrackSegmentToLine(sectionID: id, segmentIndex: 0)
                     }
                     Button("Courbe") {
-                        try? controller.convertTrackSegmentToCubic(
-                            sectionID: id,
-                            segmentIndex: 0
-                        )
+                        try? controller.convertTrackSegmentToCubic(sectionID: id, segmentIndex: 0)
                     }
                 }
             case .turnout(let id):
                 HStack {
-                    Button("-90°") {
-                        rotateTurnout(id: id, delta: -90)
-                    }
-                    Button("+90°") {
-                        rotateTurnout(id: id, delta: 90)
-                    }
-                    Button("Miroir") {
-                        mirrorTurnout(id: id)
-                    }
+                    Button("-90°") { rotateTurnout(id: id, delta: -90) }
+                    Button("+90°") { rotateTurnout(id: id, delta: 90) }
+                    Button("Miroir") { mirrorTurnout(id: id) }
                 }
             case .block, .node, .none:
                 EmptyView()
@@ -562,16 +603,21 @@ private struct LayoutStudioSelectionControls: View {
         guard let turnout = controller.document.presentation.turnouts.first(where: {
             $0.turnoutId == id
         }) else { return }
-        try? controller.transformTurnout(
-            id: id,
-            rotationDegrees: turnout.rotationDegrees + delta
-        )
+        do {
+            try controller.transformTurnout(id: id, rotationDegrees: turnout.rotationDegrees + delta)
+        } catch {
+            controller.tilePlacementMessage = error.localizedDescription
+        }
     }
 
     private func mirrorTurnout(id: String) {
         guard let turnout = controller.document.presentation.turnouts.first(where: {
             $0.turnoutId == id
         }) else { return }
-        try? controller.transformTurnout(id: id, mirrored: !turnout.mirrored)
+        do {
+            try controller.transformTurnout(id: id, mirrored: !turnout.mirrored)
+        } catch {
+            controller.tilePlacementMessage = error.localizedDescription
+        }
     }
 }

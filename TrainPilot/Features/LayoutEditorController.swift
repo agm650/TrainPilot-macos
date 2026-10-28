@@ -3,9 +3,11 @@ import Foundation
 
 enum LayoutEditorTool: String, CaseIterable, Equatable {
     case select
+    case pan
     case track
     case turnout
     case block
+    case tile
 }
 
 enum LayoutTrackCreationStyle: String, CaseIterable, Equatable {
@@ -35,7 +37,7 @@ enum LayoutTurnoutCreationStyle: String, CaseIterable, Equatable {
     }
 }
 
-enum LayoutEditorSelection: Equatable {
+enum LayoutEditorSelection: Hashable {
     case trackSection(String)
     case turnout(String)
     case block(String)
@@ -81,15 +83,21 @@ struct LayoutEditorState: Equatable, Sendable {
 final class LayoutEditorController: ObservableObject {
     @Published private(set) var tool: LayoutEditorTool = .select
     @Published private(set) var selection: LayoutEditorSelection?
+    @Published private(set) var selectedElements: Set<LayoutEditorSelection> = []
     @Published private(set) var inspectorState: LayoutInspectorState = .noSelection
     @Published private(set) var trackCreationStyle: LayoutTrackCreationStyle = .straight
     @Published private(set) var turnoutCreationStyle: LayoutTurnoutCreationStyle = .simpleRight
+
+    @Published var tileProfile: LayoutTileProfile = .straight
+    @Published var tileRotationSteps = 0
+    @Published var tilePlacementMessage: String?
 
     let document: LayoutEditorDocument
 
     private var undoStack: [LayoutEditCommand] = []
     private var redoStack: [LayoutEditCommand] = []
-    private var dragStartSnapshot: LayoutEditorState?
+    private(set) var dragStartSnapshot: LayoutEditorState?
+    private(set) var movementIdentifier = UUID().uuidString
 
     init(document: LayoutEditorDocument) {
         self.document = document
@@ -156,18 +164,20 @@ final class LayoutEditorController: ObservableObject {
     }
 
     func selectElement(at point: LayoutPoint, tolerance: Double) {
+        select(element(at: point, tolerance: tolerance))
+    }
+
+    func element(at point: LayoutPoint, tolerance: Double, includingNodes: Bool = true) -> LayoutEditorSelection? {
         if let turnout = document.presentation.turnouts.first(where: {
             LayoutPoint(x: $0.x, y: $0.y).distance(to: point) <= tolerance
         }) {
-            select(.turnout(turnout.turnoutId))
-            return
+            return .turnout(turnout.turnoutId)
         }
 
-        if let node = document.presentation.nodes.first(where: {
-            LayoutPoint(x: $0.x, y: $0.y).distance(to: point) <= tolerance
+        if includingNodes, let node = document.presentation.nodes.first(where: {
+            LayoutPoint(x: $0.x, y: $0.y).distance(to: point) <= min(tolerance, document.presentation.gridSpacing / 5)
         }) {
-            select(.node(node.nodeId))
-            return
+            return .node(node.nodeId)
         }
 
         let topologyByID = Dictionary(
@@ -188,22 +198,29 @@ final class LayoutEditorController: ObservableObject {
                 if zip(samples, samples.dropFirst()).contains(where: {
                     point.distanceToSegment(from: $0.0, to: $0.1) <= tolerance
                 }) {
-                    select(.trackSection(path.trackSectionId))
-                    return
+                    return .trackSection(path.trackSectionId)
                 }
                 current = segment.endPoint
             }
         }
-        select(nil)
+        return nil
     }
 
     func select(_ selection: LayoutEditorSelection?) {
+        selectedElements = selection.map { [$0] } ?? []
         self.selection = selection
+        inspectorState = selection.map(LayoutInspectorState.init) ?? .noSelection
+    }
+
+    func selectElements(_ elements: Set<LayoutEditorSelection>) {
+        selectedElements = elements
+        selection = elements.count == 1 ? elements.first : nil
         inspectorState = selection.map(LayoutInspectorState.init) ?? .noSelection
     }
 
     func beginDrag() {
         guard dragStartSnapshot == nil else { return }
+        movementIdentifier = UUID().uuidString
         dragStartSnapshot = currentState
     }
 
@@ -267,6 +284,7 @@ final class LayoutEditorController: ObservableObject {
             try deleteNode(id: id)
         }
 
+        removeNewlyOrphanedNodes(previousTopology: before.snapshot.topology)
         select(nil)
         record(before: before, after: currentState)
     }
@@ -403,6 +421,28 @@ final class LayoutEditorController: ObservableObject {
         )
     }
 
+    private func removeNewlyOrphanedNodes(previousTopology: TopologyDefinition) {
+        func referencedNodes(in topology: TopologyDefinition) -> Set<String> {
+            Set(topology.trackSections.flatMap { [$0.nodeAId, $0.nodeBId] })
+                .union(topology.turnoutTopologies.flatMap { $0.ports.map(\.nodeId) })
+        }
+
+        // Only remove nodes orphaned by this deletion, preserving unrelated standalone nodes.
+        let orphaned = referencedNodes(in: previousTopology)
+            .subtracting(referencedNodes(in: document.topology))
+        guard !orphaned.isEmpty else { return }
+        document.replaceSnapshot(
+            LayoutSnapshot(
+                topology: document.topology.replacing(
+                    nodes: document.topology.nodes.filter { !orphaned.contains($0.id) }
+                ),
+                presentation: document.presentation.replacing(
+                    nodes: document.presentation.nodes.filter { !orphaned.contains($0.nodeId) }
+                )
+            )
+        )
+    }
+
     private func deleteBlock(id: String) {
         document.replaceSnapshot(
             LayoutSnapshot(
@@ -436,6 +476,7 @@ final class LayoutEditorController: ObservableObject {
     }
 
     private func validateSelection() {
+        if selectedElements.count > 1 { select(nil); return }
         guard let selection else { return }
         let exists: Bool
         switch selection {

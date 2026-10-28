@@ -1,6 +1,7 @@
 import CoreGraphics
 
 struct LayoutViewportTransform: Equatable, Sendable {
+    static let canvasBaseZoom = 1.75
     static let minimumZoom = 0.25
     static let maximumZoom = 4.0
 

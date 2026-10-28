@@ -66,6 +66,11 @@
 		C7AFB253306833590016FE77 /* LayoutPublicationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */; };
 		C7AFB255306833960016FE77 /* LayoutArchiveSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */; };
 		C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */; };
+		C7C15817309298B10078ED2F /* LayoutTileEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15816309298B10078ED2F /* LayoutTileEditing.swift */; };
+		C7C15819309298C70078ED2F /* LayoutTilePalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15818309298C70078ED2F /* LayoutTilePalette.swift */; };
+		C7C1581B309298EF0078ED2F /* LayoutTileEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */; };
+		C7C1581D3092A00E0078ED2F /* LayoutSelectionEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */; };
+		C7C1581F3092A0650078ED2F /* LayoutSelectionEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,6 +145,11 @@
 		C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutPublicationCoordinatorTests.swift; sourceTree = "<group>"; };
 		C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutArchiveSaver.swift; sourceTree = "<group>"; };
 		C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeLayoutTests.swift; sourceTree = "<group>"; };
+		C7C15816309298B10078ED2F /* LayoutTileEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTileEditing.swift; sourceTree = "<group>"; };
+		C7C15818309298C70078ED2F /* LayoutTilePalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTilePalette.swift; sourceTree = "<group>"; };
+		C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTileEditingTests.swift; sourceTree = "<group>"; };
+		C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutSelectionEditing.swift; sourceTree = "<group>"; };
+		C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutSelectionEditingTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -209,6 +219,8 @@
 				C7AFB252306833590016FE77 /* LayoutPublicationCoordinatorTests.swift */,
 				C7AFB256306834A20016FE77 /* RuntimeLayoutTests.swift */,
 				C77D642630688F4900A44BB8 /* LayoutStudioTests.swift */,
+				C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */,
+				C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -365,6 +377,9 @@
 				C7AFB250306833290016FE77 /* LayoutPublicationCoordinator.swift */,
 				C7AFB254306833960016FE77 /* LayoutArchiveSaver.swift */,
 				C77D642430688F0900A44BB8 /* LayoutStudio.swift */,
+				C7C15816309298B10078ED2F /* LayoutTileEditing.swift */,
+				C7C15818309298C70078ED2F /* LayoutTilePalette.swift */,
+				C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -495,12 +510,14 @@
 				C7237491304ED0620054808A /* ThrottleWheel.swift in Sources */,
 				C7AFB251306833290016FE77 /* LayoutPublicationCoordinator.swift in Sources */,
 				C7AFB23930682F930016FE77 /* LayoutCanvas.swift in Sources */,
+				C7C15819309298C70078ED2F /* LayoutTilePalette.swift in Sources */,
 				C77D642530688F0900A44BB8 /* LayoutStudio.swift in Sources */,
 				C7237492304ED0620054808A /* KeychainStore.swift in Sources */,
 				C7237493304ED0620054808A /* FunctionPanel.swift in Sources */,
 				C7AFB24B3068321B0016FE77 /* LayoutBlockEditing.swift in Sources */,
 				C7237494304ED0620054808A /* LibraryView.swift in Sources */,
 				C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */,
+				C7C1581D3092A00E0078ED2F /* LayoutSelectionEditing.swift in Sources */,
 				C7237495304ED0620054808A /* KeyboardController.swift in Sources */,
 				C7237496304ED0620054808A /* APIClient.swift in Sources */,
 				C7237497304ED0620054808A /* SNCFClassicCabView.swift in Sources */,
@@ -520,6 +537,7 @@
 				C7AFB23530682F920016FE77 /* LayoutViewportTransform.swift in Sources */,
 				C72374A0304ED0620054808A /* PreferencesView.swift in Sources */,
 				C7AFB24F306833060016FE77 /* LayoutArchiveBuilder.swift in Sources */,
+				C7C15817309298B10078ED2F /* LayoutTileEditing.swift in Sources */,
 				C72374A1304ED0620054808A /* Models.swift in Sources */,
 				C7AFB22C30682DF40016FE77 /* LayoutDraftStore.swift in Sources */,
 				C72374A2304ED0620054808A /* AppPreferences.swift in Sources */,
@@ -531,6 +549,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7C1581B309298EF0078ED2F /* LayoutTileEditingTests.swift in Sources */,
 				C7AFB249306831A80016FE77 /* LayoutTurnoutEditingTests.swift in Sources */,
 				C7AFB241306830470016FE77 /* LayoutEditorControllerTests.swift in Sources */,
 				00000000000000000000004A /* SemanticVersionTests.swift in Sources */,
@@ -545,6 +564,7 @@
 				C77D642730688F4900A44BB8 /* LayoutStudioTests.swift in Sources */,
 				C7AFB253306833590016FE77 /* LayoutPublicationCoordinatorTests.swift in Sources */,
 				C7AFB245306830D10016FE77 /* LayoutTrackEditingTests.swift in Sources */,
+				C7C1581F3092A0650078ED2F /* LayoutSelectionEditingTests.swift in Sources */,
 				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
 				C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */,
 			);
