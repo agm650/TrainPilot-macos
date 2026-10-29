@@ -256,6 +256,55 @@ final class AppModel: ObservableObject {
 
     // MARK: - Layout import / export
 
+    func publishStudioLayout(
+        _ document: LayoutEditorDocument,
+        confirm: @MainActor (LayoutValidationResult) -> Bool
+    ) async throws -> LayoutSnapshot? {
+        guard isAdministrator else { throw LayoutPublicationError.administratorRequired }
+        guard connectionState == .ready, let api, let layoutRepository else {
+            throw LayoutEditorError.serverLayoutUnavailable
+        }
+        let coordinator = LayoutPublicationCoordinator(api: api)
+        try await layoutRepository.loadInitialState()
+        guard let initial = layoutRepository.snapshot else {
+            throw LayoutEditorError.serverLayoutUnavailable
+        }
+        let result = try await coordinator.validate(document: document, serverSnapshot: initial)
+        guard result.valid else {
+            throw StudioPublicationError.validation(result.errors.map(\.message).joined(separator: "\n"))
+        }
+        guard confirm(result) else { return nil }
+        // A login/server change during validation must never publish to the old connection.
+        guard self.api === api, isAdministrator, connectionState == .ready else {
+            throw LayoutEditorError.serverLayoutUnavailable
+        }
+        try await layoutRepository.loadInitialState()
+        guard let latest = layoutRepository.snapshot else {
+            throw LayoutEditorError.serverLayoutUnavailable
+        }
+        guard initial == latest else {
+            throw StudioPublicationError.serverChanged
+        }
+        guard self.api === api, isAdministrator, connectionState == .ready else {
+            throw LayoutEditorError.serverLayoutUnavailable
+        }
+        try await coordinator.publish(
+            document: document, serverSnapshot: latest,
+            isAdministrator: isAdministrator, confirmingWarnings: true
+        )
+        do {
+            try await layoutRepository.loadInitialState()
+            guard let confirmed = layoutRepository.snapshot else {
+                throw LayoutEditorError.serverLayoutUnavailable
+            }
+            // An identical import can legitimately retain the same revisions.
+            try await document.discardLocalDraft()
+            return confirmed
+        } catch {
+            throw LayoutTransferError(stage: .reloading, underlying: error)
+        }
+    }
+
     func exportCurrentLayout() async -> LayoutArchive? {
         guard let api else { return nil }
 

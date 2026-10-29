@@ -2,11 +2,37 @@ import SwiftUI
 
 struct NetworkViewport: View {
     @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        if let repository = model.layoutRepository {
+            ObservedNetworkViewport(repository: repository)
+        } else {
+            NetworkViewportContent(snapshot: nil, availability: .unavailable)
+        }
+    }
+}
+
+// AppModel publishes repository replacement; this view observes its asynchronous contents.
+private struct ObservedNetworkViewport: View {
+    @ObservedObject var repository: LayoutRepository
+
+    var body: some View {
+        NetworkViewportContent(
+            snapshot: repository.snapshot,
+            availability: repository.availability
+        )
+    }
+}
+
+private struct NetworkViewportContent: View {
+    @EnvironmentObject private var model: AppModel
+    let snapshot: LayoutSnapshot?
+    let availability: LayoutAvailability
     @State private var selectedTurnoutID: String?
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            if let snapshot = model.layoutRepository?.snapshot {
+            if let snapshot {
                 LayoutCanvas(
                     topology: snapshot.topology,
                     presentation: snapshot.presentation,
@@ -46,7 +72,7 @@ struct NetworkViewport: View {
 
     private var canCommandTurnouts: Bool {
         model.connectionState == .ready &&
-            model.layoutRepository?.availability == .ready &&
+            availability == .ready &&
             model.stationStatus.connectivity == .online &&
             model.systemInfo?.station.accessoryControl == true
     }
@@ -71,7 +97,7 @@ struct NetworkViewport: View {
                 .fontWeight(.bold)
             Text("• lecture seule")
                 .foregroundColor(.secondary)
-            if model.layoutRepository?.availability == .stale {
+            if availability == .stale {
                 Label("données anciennes", systemImage: "exclamationmark.triangle")
                     .foregroundColor(.orange)
             }
@@ -162,7 +188,7 @@ struct NetworkViewport: View {
 
     private var commandUnavailableReason: String {
         if model.connectionState != .ready ||
-            model.layoutRepository?.availability != .ready {
+            availability != .ready {
             return "Commande indisponible : serveur hors ligne"
         }
         if model.stationStatus.connectivity != .online {

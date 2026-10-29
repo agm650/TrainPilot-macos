@@ -55,13 +55,34 @@ final class WindowCoordinator: NSObject, NSWindowDelegate {
 
         let session = LayoutStudioSession(
             snapshot: appModel.isAdministrator ? appModel.layoutRepository?.snapshot : nil,
+            turnouts: appModel.isAdministrator ? appModel.turnouts.compactMap { turnout in
+                guard let kind = turnout.kind else { return nil }
+                return TurnoutDefinition(
+                    id: turnout.id, name: turnout.name, kind: kind,
+                    endpoints: turnout.endpoints, positions: turnout.positions
+                )
+            } : [],
             canPublish: LayoutStudioAccessPolicy.canPublish(
                 currentUser: appModel.currentUser,
                 connectionState: appModel.connectionState
             )
         )
+        session.publication = { [weak appModel] document in
+            guard let appModel else { throw LayoutEditorError.serverLayoutUnavailable }
+            return try await appModel.publishStudioLayout(document) { result in
+                let alert = NSAlert()
+                alert.messageText = "Publier le layout ?"
+                alert.informativeText = (
+                    ["Le layout actuellement publié sur le serveur sera remplacé par ce TCO."]
+                    + result.warnings.map(\.message)
+                ).joined(separator: "\n\n")
+                alert.addButton(withTitle: "Publier")
+                alert.addButton(withTitle: "Annuler")
+                return alert.runModal() == .alertFirstButtonReturn
+            }
+        }
         let hosting = NSHostingController(
-            rootView: LayoutStudioView(session: session)
+            rootView: LayoutStudioView(session: session).environmentObject(appModel)
         )
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 720),

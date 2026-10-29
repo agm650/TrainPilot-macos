@@ -1,6 +1,20 @@
 import Combine
 import Foundation
 
+enum StudioPublicationError: LocalizedError {
+    case validation(String)
+    case serverChanged
+
+    var errorDescription: String? {
+        switch self {
+        case .validation(let details):
+            return "Publication impossible : le serveur a détecté des erreurs.\n" + details
+        case .serverChanged:
+            return "Le layout serveur a changé pendant la validation. Relancez la publication."
+        }
+    }
+}
+
 enum LayoutRevisionConflict: Equatable {
     case none
     case topologyChanged

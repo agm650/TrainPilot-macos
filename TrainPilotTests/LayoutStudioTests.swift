@@ -4,6 +4,52 @@ import Testing
 
 @MainActor
 struct LayoutArchiveCompatibilityTests {
+    @Test func studioPublicationAdoptsConfirmedRevisionsAndAllowsAnotherPublication() async {
+        let session = LayoutStudioSession(canPublish: true)
+        var calls = 0
+        session.publication = { document in
+            calls += 1
+            #expect(session.isPublishing)
+            if calls == 2 {
+                #expect(document.baseTopologyRevision == "local")
+                #expect(document.basePresentationRevision == "local")
+            }
+            return LayoutStudioSession.emptySnapshot
+        }
+        await session.publish()
+        await session.publish()
+        #expect(calls == 2)
+        #expect(!session.isPublishing)
+        #expect(session.message == "Layout publié et rechargé depuis le serveur.")
+    }
+
+    @Test func studioPublicationCancellationAndFailureKeepDocument() async {
+        let session = LayoutStudioSession(canPublish: true)
+        let document = session.controller.document
+        session.publication = { _ in nil }
+        await session.publish()
+        #expect(session.controller.document === document)
+        #expect(!session.isPublishing)
+        session.publication = { _ in throw StudioPublicationError.validation("Voie invalide") }
+        await session.publish()
+        #expect(session.controller.document === document)
+        #expect(session.message?.contains("Voie invalide") == true)
+        #expect(!session.isPublishing)
+    }
+
+    @Test func studioPublicationIgnoresDuplicateRequests() async {
+        let session = LayoutStudioSession(canPublish: true)
+        var calls = 0
+        session.publication = { _ in
+            calls += 1
+            await session.publish()
+            return nil
+        }
+        await session.publish()
+        #expect(calls == 1)
+        #expect(!session.isPublishing)
+    }
+
     @Test func serverArchiveContract() throws {
         let session = LayoutStudioSession(canPublish: false)
         let archive = try LayoutStudioArchiveService().archive(

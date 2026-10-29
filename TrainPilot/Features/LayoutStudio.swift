@@ -178,6 +178,9 @@ final class LayoutStudioSession: ObservableObject {
     @Published private(set) var controller: LayoutEditorController
     @Published var documentName: String
     @Published var message: String?
+    @Published private(set) var isPublishing = false
+
+    var publication: (@MainActor (LayoutEditorDocument) async throws -> LayoutSnapshot?)?
 
     let canPublish: Bool
 
@@ -205,6 +208,34 @@ final class LayoutStudioSession: ObservableObject {
                 origin: origin
             )
         )
+    }
+
+    func publish() async {
+        guard !isPublishing, let publication else { return }
+        isPublishing = true
+        message = "Validation serveur en cours…"
+        defer { isPublishing = false }
+        let document = controller.document
+        do {
+            guard let snapshot = try await publication(document) else {
+                message = "Publication annulée."
+                return
+            }
+            // Adopt the confirmed revisions so subsequent publications use the new base.
+            replaceDocument(
+                snapshot: snapshot,
+                turnouts: document.turnoutDefinitions,
+                name: documentName,
+                origin: .server(ServerLayoutReference(serverIdentity: document.serverIdentity))
+            )
+            message = "Layout publié et rechargé depuis le serveur."
+        } catch {
+            if NetworkDiagnostics.isCancellation(error) {
+                message = "Publication annulée."
+            } else {
+                message = error.localizedDescription
+            }
+        }
     }
 
     func newDocument() {
@@ -331,10 +362,12 @@ struct LayoutStudioView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 600)
+        .disabled(session.isPublishing)
     }
 }
 
 private struct LayoutStudioToolbar: View {
+    @EnvironmentObject private var appModel: AppModel
     @ObservedObject var session: LayoutStudioSession
     @ObservedObject private var controller: LayoutEditorController
 
@@ -399,8 +432,13 @@ private struct LayoutStudioToolbar: View {
             Button(action: session.validateLocally) {
                 Label("Valider", systemImage: "checkmark.circle")
             }
-            Button("Publier") {}
-                .disabled(!session.canPublish)
+            Button("Publier") {
+                Task { await session.publish() }
+            }
+            .disabled(session.publication == nil || !LayoutStudioAccessPolicy.canPublish(
+                currentUser: appModel.currentUser,
+                connectionState: appModel.connectionState
+            ))
         }
         .buttonStyle(.bordered)
         .padding(8)
