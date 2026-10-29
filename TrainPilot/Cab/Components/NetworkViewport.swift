@@ -29,6 +29,7 @@ private struct NetworkViewportContent: View {
     let snapshot: LayoutSnapshot?
     let availability: LayoutAvailability
     @State private var selectedTurnoutID: String?
+    @State private var sendingTurnouts: Set<String> = []
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -41,7 +42,7 @@ private struct NetworkViewportContent: View {
                         blocks: model.blocks,
                         turnouts: model.turnouts
                     ),
-                    onTurnoutSelected: { selectedTurnoutID = $0 }
+                    onTurnoutSelected: handleTurnoutClick
                 )
             } else {
                 unavailableState
@@ -64,6 +65,25 @@ private struct NetworkViewportContent: View {
             minHeight: 180,
             maxHeight: .infinity
         )
+    }
+
+    private func handleTurnoutClick(_ id: String) {
+        guard let turnout = model.turnouts.first(where: { $0.id == id }) else { return }
+        if canCommandTurnouts, let target = TopologyRuntimeState.toggleTarget(for: turnout) {
+            send(turnout, position: target)
+        } else {
+            selectedTurnoutID = id
+        }
+    }
+
+    private func send(_ turnout: Turnout, position: String) {
+        guard canCommandTurnouts, !turnout.pending, turnout.commandStatus != .pending,
+              !sendingTurnouts.contains(turnout.id) else { return }
+        sendingTurnouts.insert(turnout.id)
+        Task {
+            await model.setTurnout(id: turnout.id, position: position)
+            sendingTurnouts.remove(turnout.id)
+        }
     }
 
     private var selectedTurnout: Turnout? {
@@ -95,7 +115,7 @@ private struct NetworkViewportContent: View {
             Image(systemName: "point.3.connected.trianglepath.dotted")
             Text("PLAN DU RÉSEAU")
                 .fontWeight(.bold)
-            Text("• lecture seule")
+            Text("• cliquer sur un aiguillage")
                 .foregroundColor(.secondary)
             if availability == .stale {
                 Label("données anciennes", systemImage: "exclamationmark.triangle")
@@ -161,14 +181,9 @@ private struct NetworkViewportContent: View {
 
             ForEach(turnout.positions) { position in
                 Button(position.label ?? position.id) {
-                    Task {
-                        await model.setTurnout(
-                            id: turnout.id,
-                            position: position.id
-                        )
-                    }
+                    send(turnout, position: position.id)
                 }
-                .disabled(!canCommandTurnouts || turnout.pending)
+                .disabled(!canCommandTurnouts || turnout.pending || turnout.commandStatus == .pending || sendingTurnouts.contains(turnout.id))
             }
 
             if !canCommandTurnouts {

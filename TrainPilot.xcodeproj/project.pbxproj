@@ -75,6 +75,7 @@
 		C7C158233093293B0078ED2F /* NetworkDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */; };
 		C7C158253093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */; };
 		C7C158273093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */; };
+		C7C158293093EB5D0078ED2F /* TurnoutOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158283093EB5D0078ED2F /* TurnoutOperationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -158,6 +159,7 @@
 		C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsTests.swift; sourceTree = "<group>"; };
 		C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTurnoutConfigurationView.swift; sourceTree = "<group>"; };
 		C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTurnoutConfigurationTests.swift; sourceTree = "<group>"; };
+		C7C158283093EB5D0078ED2F /* TurnoutOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnoutOperationTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -231,6 +233,7 @@
 				C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */,
 				C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */,
 				C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */,
+				C7C158283093EB5D0078ED2F /* TurnoutOperationTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -574,6 +577,7 @@
 				C7AFB23D30682F940016FE77 /* TopologyRenderPlanTests.swift in Sources */,
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,
 				C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */,
+				C7C158293093EB5D0078ED2F /* TurnoutOperationTests.swift in Sources */,
 				C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */,
 				C7AFB24D3068321B0016FE77 /* LayoutBlockEditingTests.swift in Sources */,
 				C77D642730688F4900A44BB8 /* LayoutStudioTests.swift in Sources */,

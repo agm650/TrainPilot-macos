@@ -52,6 +52,15 @@ struct TopologyRuntimeState: Equatable, Sendable {
         return .none
     }
 
+    static func toggleTarget(for turnout: Turnout) -> String? {
+        guard turnout.kind == .simple, turnout.positions.count == 2,
+              turnout.reportedStatus == .known,
+              !turnout.pending, turnout.commandStatus != .pending,
+              turnout.commandStatus != .failed, turnout.commandStatus != .timeout,
+              turnout.positions.contains(where: { $0.id == turnout.reportedPosition }) else { return nil }
+        return turnout.positions.first { $0.id != turnout.reportedPosition }?.id
+    }
+
     func turnoutVisualState(for id: String) -> TurnoutVisualState {
         guard let turnout = turnoutStates[id] else { return .unknown }
         if turnout.reportedStatus == .invalid ||
@@ -84,8 +93,15 @@ struct TopologyRenderPlan: Equatable, Sendable {
     struct Turnout: Equatable, Sendable, Identifiable {
         let presentation: LayoutTurnoutPresentation
         let ports: [LayoutPoint]
+
+        func reportedPaths(in runtime: TopologyRuntimeState) -> [[LayoutPoint]] {
+            guard let state = runtime.turnoutStates[id], state.reportedStatus == .known else { return [] }
+            return pathsByPosition[state.reportedPosition] ?? []
+        }
         let blockStyles: [LayoutBlockStyle]
         let blockIDs: [String]
+
+        var pathsByPosition: [String: [[LayoutPoint]]] = [:]
 
         var id: String { presentation.turnoutId }
     }
@@ -158,7 +174,23 @@ struct TopologyRenderPlan: Equatable, Sendable {
                     return LayoutPoint(x: position.x, y: position.y)
                 } ?? [],
                 blockStyles: styles,
-                blockIDs: blockIDs
+                blockIDs: blockIDs,
+                pathsByPosition: Dictionary(uniqueKeysWithValues:
+                    (turnoutTopologies[turnout.turnoutId]?.positions ?? []).map { position in
+                        let ports = turnoutTopologies[turnout.turnoutId]?.ports ?? []
+                        let paths: [[LayoutPoint]] = position.connections.compactMap { connection in
+                            guard let a = ports.first(where: { $0.id == connection.portAId }),
+                                  let b = ports.first(where: { $0.id == connection.portBId }),
+                                  let start = nodePositions[a.nodeId],
+                                  let end = nodePositions[b.nodeId] else { return nil }
+                            return [
+                                LayoutPoint(x: start.x, y: start.y),
+                                LayoutPoint(x: turnout.x, y: turnout.y),
+                                LayoutPoint(x: end.x, y: end.y)
+                            ]
+                        }
+                        return (position.positionId, paths)
+                    })
             )
         }
         nodes = presentation.nodes
@@ -288,7 +320,9 @@ struct TopologyRenderer: View {
             let center = transform.canvasPoint(
                 for: LayoutPoint(x: presentation.x, y: presentation.y)
             )
-            let radius = max(5, 7 * transform.zoom)
+            let radius = mode == .operationalReadOnly
+                ? max(12, 7 * transform.zoom)
+                : max(5, 7 * transform.zoom)
             let rect = CGRect(
                 x: center.x - radius,
                 y: center.y - radius,
@@ -321,15 +355,56 @@ struct TopologyRenderer: View {
                     lineJoin: .round
                 )
             )
+            if mode == .operationalReadOnly {
+                for points in turnout.reportedPaths(in: runtime) {
+                    var active = Path()
+                    for (index, point) in points.enumerated() {
+                        let canvasPoint = transform.canvasPoint(for: point)
+                        if index == 0 { active.move(to: canvasPoint) }
+                        else { active.addLine(to: canvasPoint) }
+                    }
+                    // Separate the reported route from the fixed rails on both light and dark backgrounds.
+                    context.stroke(active, with: .color(.black),
+                                   style: StrokeStyle(lineWidth: max(7, 7 * transform.zoom),
+                                                      lineCap: .round, lineJoin: .round))
+                    context.stroke(active, with: .color(Color(red: 0.1, green: 1, blue: 0.15)),
+                                   style: StrokeStyle(lineWidth: max(4, 4 * transform.zoom),
+                                                      lineCap: .round, lineJoin: .round))
+                }
+            }
             context.fill(
                 Path(ellipseIn: rect),
-                with: .color(turnoutColor(id: turnout.id))
+                with: .color(mode == .operationalReadOnly ? .black : turnoutColor(id: turnout.id))
             )
             context.stroke(
                 Path(ellipseIn: rect),
-                with: .color(.primary),
+                with: .color(mode == .operationalReadOnly ? turnoutColor(id: turnout.id) : .primary),
                 lineWidth: max(1, transform.zoom)
             )
+            if mode == .operationalReadOnly && !turnout.reportedPaths(in: runtime).isEmpty {
+                var symbol = Path()
+                for points in turnout.reportedPaths(in: runtime) {
+                    for (index, point) in points.enumerated() {
+                        let dx = point.x - presentation.x
+                        let dy = point.y - presentation.y
+                        let length = hypot(dx, dy)
+                        let scale = length > 0 ? radius * 0.72 / length : 0
+                        let tip = CGPoint(x: center.x + dx * scale, y: center.y + dy * scale)
+                        if index == 0 { symbol.move(to: tip) }
+                        else { symbol.addLine(to: tip) }
+                    }
+                }
+                context.stroke(symbol, with: .color(Color(red: 0.1, green: 1, blue: 0.15)),
+                               style: StrokeStyle(lineWidth: max(2.5, radius * 0.2),
+                                                  lineCap: .round, lineJoin: .round))
+            }
+            if mode == .operationalReadOnly && turnout.reportedPaths(in: runtime).isEmpty {
+                context.draw(
+                    Text("?").font(.system(size: radius * 1.3, weight: .bold))
+                        .foregroundColor(.yellow),
+                    at: center
+                )
+            }
         }
     }
 
