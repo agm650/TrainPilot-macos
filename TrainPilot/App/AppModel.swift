@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Combine
 
 enum ConnectionState: Equatable {
@@ -273,10 +274,15 @@ final class AppModel: ObservableObject {
         }
         guard let api else { return nil }
 
+        NetworkDiagnostics.layout.notice("Validation started mode=replace archiveBytes=\(data.count)")
         do {
-            return try await api.validateLayout(archive: data, mode: .replace)
+            let result = try await api.validateLayout(archive: data, mode: .replace)
+            NetworkDiagnostics.layout.notice("Validation finished valid=\(result.valid) errors=\(result.errors.count) warnings=\(result.warnings.count)")
+            return result
         } catch {
-            presentError(error)
+            guard !NetworkDiagnostics.isCancellation(error) else { return nil }
+            NetworkDiagnostics.layout.error("Validation failed; import was not sent. See HTTP logs.")
+            presentError(LayoutTransferError(stage: .validation, underlying: error))
             return nil
         }
     }
@@ -288,13 +294,27 @@ final class AppModel: ObservableObject {
         }
         guard let api else { return false }
 
+        NetworkDiagnostics.layout.notice("Import started mode=replace archiveBytes=\(data.count)")
         do {
             // The current server contract exposes a single-layout replace import.
             try await api.importLayout(archive: data, mode: .replace)
-            try await layoutRepository?.loadInitialState()
+        } catch {
+            guard !NetworkDiagnostics.isCancellation(error) else { return false }
+            NetworkDiagnostics.layout.error("Import request failed. See HTTP logs.")
+            presentError(LayoutTransferError(stage: .importing, underlying: error))
+            return false
+        }
+
+        NetworkDiagnostics.layout.notice("Import confirmed by server; reloading topology and presentation.")
+        do {
+            guard let layoutRepository else { throw LayoutEditorError.serverLayoutUnavailable }
+            try await layoutRepository.loadInitialState()
+            NetworkDiagnostics.layout.notice("Layout reload succeeded.")
             return true
         } catch {
-            presentError(error)
+            guard !NetworkDiagnostics.isCancellation(error) else { return false }
+            NetworkDiagnostics.layout.error("Import confirmed, but layout reload failed. See HTTP logs.")
+            presentError(LayoutTransferError(stage: .reloading, underlying: error))
             return false
         }
     }

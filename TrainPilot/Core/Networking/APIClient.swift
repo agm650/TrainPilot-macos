@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 enum APIError: LocalizedError {
     case invalidServerURL
@@ -54,6 +55,7 @@ actor APIClient: LayoutDataSource {
     }
 
     func validateCompatibility(_ info: SystemInfo) throws {
+        NetworkDiagnostics.http.notice("Server version=\(info.serverVersion, privacy: .public) API=\(info.apiVersion, privacy: .public) minimumClientAPI=\(info.minimumClientApiVersion, privacy: .public) clientAPI=\(Self.clientAPIVersion, privacy: .public)")
         guard let client = SemanticVersion(Self.clientAPIVersion),
               let minimum = SemanticVersion(info.minimumClientApiVersion),
               let server = SemanticVersion(info.apiVersion) else {
@@ -583,9 +585,34 @@ actor APIClient: LayoutDataSource {
             )
         }
 
-        let (data, response) = try await URLSession.shared.data(
-            for: request
-        )
+        let requestID = UUID().uuidString
+        let endpoint = NetworkDiagnostics.endpoint(request.url)
+        let origin = NetworkDiagnostics.origin(request.url)
+        let started = ProcessInfo.processInfo.systemUptime
+        NetworkDiagnostics.http.info("[\(requestID, privacy: .public)] → \(method, privacy: .public) \(origin, privacy: .public)\(endpoint, privacy: .public)")
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            let elapsed = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+            let code = (error as NSError).code
+            if NetworkDiagnostics.isCancellation(error) {
+                NetworkDiagnostics.http.debug("[\(requestID, privacy: .public)] cancelled")
+            } else {
+                NetworkDiagnostics.http.error("[\(requestID, privacy: .public)] transport failure code=\(code) duration=\(elapsed)ms")
+            }
+            throw error
+        }
+        let elapsed = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        let finalEndpoint = NetworkDiagnostics.endpoint(response.url)
+        let finalOrigin = NetworkDiagnostics.origin(response.url)
+        if expected.contains(status) {
+            NetworkDiagnostics.http.info("[\(requestID, privacy: .public)] ← \(method, privacy: .public) \(finalOrigin, privacy: .public)\(finalEndpoint, privacy: .public) status=\(status) duration=\(elapsed)ms bytes=\(data.count)")
+        } else {
+            NetworkDiagnostics.http.error("[\(requestID, privacy: .public)] ← \(method, privacy: .public) \(finalOrigin, privacy: .public)\(finalEndpoint, privacy: .public) status=\(status) duration=\(elapsed)ms bytes=\(data.count)")
+        }
 
         guard let http = response as? HTTPURLResponse else {
             throw APIError.invalidResponse

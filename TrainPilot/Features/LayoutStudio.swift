@@ -79,9 +79,9 @@ struct LayoutStudioArchiveService {
             throw LayoutArchiveError.missingEntry("manifest.json")
         }
         guard let data = entries["layout.json"],
-              var root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               var topology = root["layout"] as? [String: Any],
-              var presentation = root["presentation"] as? [String: Any] else {
+              var presentation = (topology["presentation"] ?? root["presentation"]) as? [String: Any] else {
             throw LayoutArchiveError.invalidLayoutDocument
         }
 
@@ -95,8 +95,10 @@ struct LayoutStudioArchiveService {
         topology.removeValue(forKey: "turnouts")
         topology["revision"] = topology["revision"] ?? "local"
         presentation["revision"] = presentation["revision"] ?? "local"
-        root["layout"] = topology
-        root["presentation"] = presentation
+        // Older Studio archives used the same coordinates under a different name.
+        if presentation["coordinateSystem"] as? String == "cartesian" {
+            presentation["coordinateSystem"] = "layout-units"
+        }
 
         let decoder = JSONDecoder()
         let topologyData = try JSONSerialization.data(withJSONObject: topology)
@@ -125,18 +127,18 @@ struct LayoutStudioArchiveService {
         topology["turnouts"] = try array(for: document.turnoutDefinitions, encoder: encoder)
         var presentation = try dictionary(for: document.presentation, encoder: encoder)
         presentation.removeValue(forKey: "revision")
+        if presentation["coordinateSystem"] as? String == "cartesian" {
+            presentation["coordinateSystem"] = "layout-units"
+        }
+        topology["presentation"] = presentation
 
         let layoutData = try JSONSerialization.data(
             withJSONObject: [
-                "layout": topology,
-                "presentation": presentation
+                "layout": topology
             ],
             options: [.prettyPrinted, .sortedKeys]
         )
-        let manifestData = try JSONSerialization.data(
-            withJSONObject: ["formatVersion": 1],
-            options: [.prettyPrinted, .sortedKeys]
-        )
+        let manifestData = try LayoutArchiveFormat.manifestData()
         return LayoutArchive(
             data: ZIPContainer.write([
                 "layout.json": layoutData,
@@ -299,7 +301,7 @@ final class LayoutStudioSession: ObservableObject {
         ),
         presentation: LayoutPresentationDefinition(
             revision: "local",
-            coordinateSystem: "cartesian",
+            coordinateSystem: "layout-units",
             gridSpacing: 20,
             nodes: [],
             trackSections: [],

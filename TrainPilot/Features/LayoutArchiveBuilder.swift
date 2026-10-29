@@ -21,6 +21,20 @@ enum LayoutArchiveError: LocalizedError, Equatable {
     }
 }
 
+enum LayoutArchiveFormat {
+    static func manifestData() throws -> Data {
+        try JSONSerialization.data(
+            withJSONObject: [
+                "format": "org.dcc-control.package",
+                "version": 7,
+                "packageType": "layout",
+                "createdAt": ISO8601DateFormatter().string(from: Date())
+            ],
+            options: [.prettyPrinted, .sortedKeys]
+        )
+    }
+}
+
 struct LayoutArchiveBuilder {
     @MainActor
     func build(
@@ -46,11 +60,15 @@ struct LayoutArchiveBuilder {
         layout["turnoutTopologies"] = topology["turnoutTopologies"]
         layout["blocks"] = topology["blocks"]
         layout["turnouts"] = try array(for: document.turnoutDefinitions)
-        root["layout"] = layout
-
         var presentation = try dictionary(for: document.presentation)
         presentation.removeValue(forKey: "revision")
-        root["presentation"] = presentation
+        if presentation["coordinateSystem"] as? String == "cartesian" {
+            presentation["coordinateSystem"] = "layout-units"
+        }
+        layout["presentation"] = presentation
+        root["layout"] = layout
+        root.removeValue(forKey: "presentation")
+        entries["manifest.json"] = try LayoutArchiveFormat.manifestData()
 
         entries["layout.json"] = try JSONSerialization.data(
             withJSONObject: root,

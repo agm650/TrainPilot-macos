@@ -71,6 +71,8 @@
 		C7C1581B309298EF0078ED2F /* LayoutTileEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */; };
 		C7C1581D3092A00E0078ED2F /* LayoutSelectionEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */; };
 		C7C1581F3092A0650078ED2F /* LayoutSelectionEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */; };
+		C7C158213092B4FB0078ED2F /* NetworkDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158203092B4FB0078ED2F /* NetworkDiagnostics.swift */; };
+		C7C158233093293B0078ED2F /* NetworkDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -150,6 +152,8 @@
 		C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTileEditingTests.swift; sourceTree = "<group>"; };
 		C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutSelectionEditing.swift; sourceTree = "<group>"; };
 		C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutSelectionEditingTests.swift; sourceTree = "<group>"; };
+		C7C158203092B4FB0078ED2F /* NetworkDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnostics.swift; sourceTree = "<group>"; };
+		C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -221,6 +225,7 @@
 				C77D642630688F4900A44BB8 /* LayoutStudioTests.swift */,
 				C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */,
 				C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */,
+				C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -303,6 +308,7 @@
 				C723747A304ED0620054808A /* EventClient.swift */,
 				C723747B304ED0620054808A /* SequenceTracker.swift */,
 				C7AFB22530682BAC0016FE77 /* LayoutRepository.swift */,
+				C7C158203092B4FB0078ED2F /* NetworkDiagnostics.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -512,6 +518,7 @@
 				C7AFB23930682F930016FE77 /* LayoutCanvas.swift in Sources */,
 				C7C15819309298C70078ED2F /* LayoutTilePalette.swift in Sources */,
 				C77D642530688F0900A44BB8 /* LayoutStudio.swift in Sources */,
+				C7C158213092B4FB0078ED2F /* NetworkDiagnostics.swift in Sources */,
 				C7237492304ED0620054808A /* KeychainStore.swift in Sources */,
 				C7237493304ED0620054808A /* FunctionPanel.swift in Sources */,
 				C7AFB24B3068321B0016FE77 /* LayoutBlockEditing.swift in Sources */,
@@ -566,6 +573,7 @@
 				C7AFB245306830D10016FE77 /* LayoutTrackEditingTests.swift in Sources */,
 				C7C1581F3092A0650078ED2F /* LayoutSelectionEditingTests.swift in Sources */,
 				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
+				C7C158233093293B0078ED2F /* NetworkDiagnosticsTests.swift in Sources */,
 				C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

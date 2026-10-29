@@ -63,7 +63,8 @@ final class LayoutPublicationCoordinatorTests: XCTestCase {
             (layout["feedbackMappings"] as? [[String: Any]])?.first?["blockId"] as? String,
             "block-legacy"
         )
-        XCTAssertNotNil(root["presentation"])
+        XCTAssertNil(root["presentation"])
+        XCTAssertNotNil(layout["presentation"])
         XCTAssertEqual(built.suggestedFilename, "published-draft.dcclayout")
     }
 
