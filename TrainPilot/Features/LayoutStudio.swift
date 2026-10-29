@@ -589,6 +589,15 @@ private struct LayoutStudioInspector: View {
             Divider()
             LayoutStudioSelectionInspector(description: selectionDescription)
             LayoutStudioSelectionControls(controller: controller)
+            if controller.selectedElements.count == 1,
+               case .turnout(let id) = controller.selection,
+               let definition = document.turnoutDefinitions.first(where: { $0.id == id }) {
+                ScrollView {
+                    LayoutTurnoutConfigurationView(controller: controller, definition: definition)
+                        .id(id)
+                        .padding(.vertical, 4)
+                }
+            }
             Divider()
             LayoutStudioValidationInspector(message: message)
             Spacer()

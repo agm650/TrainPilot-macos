@@ -73,6 +73,8 @@
 		C7C1581F3092A0650078ED2F /* LayoutSelectionEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */; };
 		C7C158213092B4FB0078ED2F /* NetworkDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158203092B4FB0078ED2F /* NetworkDiagnostics.swift */; };
 		C7C158233093293B0078ED2F /* NetworkDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */; };
+		C7C158253093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */; };
+		C7C158273093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -154,6 +156,8 @@
 		C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutSelectionEditingTests.swift; sourceTree = "<group>"; };
 		C7C158203092B4FB0078ED2F /* NetworkDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnostics.swift; sourceTree = "<group>"; };
 		C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiagnosticsTests.swift; sourceTree = "<group>"; };
+		C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTurnoutConfigurationView.swift; sourceTree = "<group>"; };
+		C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTurnoutConfigurationTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -226,6 +230,7 @@
 				C7C1581A309298EF0078ED2F /* LayoutTileEditingTests.swift */,
 				C7C1581E3092A0650078ED2F /* LayoutSelectionEditingTests.swift */,
 				C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */,
+				C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -386,6 +391,7 @@
 				C7C15816309298B10078ED2F /* LayoutTileEditing.swift */,
 				C7C15818309298C70078ED2F /* LayoutTilePalette.swift */,
 				C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */,
+				C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -546,6 +552,7 @@
 				C7AFB24F306833060016FE77 /* LayoutArchiveBuilder.swift in Sources */,
 				C7C15817309298B10078ED2F /* LayoutTileEditing.swift in Sources */,
 				C72374A1304ED0620054808A /* Models.swift in Sources */,
+				C7C158253093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift in Sources */,
 				C7AFB22C30682DF40016FE77 /* LayoutDraftStore.swift in Sources */,
 				C72374A2304ED0620054808A /* AppPreferences.swift in Sources */,
 				C72374A3304ED0620054808A /* SNCFPalette.swift in Sources */,
@@ -562,6 +569,7 @@
 				00000000000000000000004A /* SemanticVersionTests.swift in Sources */,
 				00000000000000000000004C /* SequenceTrackerTests.swift in Sources */,
 				C7AFB23B30682F940016FE77 /* LayoutViewportTransformTests.swift in Sources */,
+				C7C158273093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift in Sources */,
 				C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */,
 				C7AFB23D30682F940016FE77 /* TopologyRenderPlanTests.swift in Sources */,
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,

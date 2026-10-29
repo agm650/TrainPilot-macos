@@ -88,7 +88,68 @@ struct TurnoutValidator {
     }
 }
 
+enum TurnoutConfigurationError: LocalizedError {
+    case invalid(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalid(let message): return message
+        }
+    }
+}
+
 extension LayoutEditorController {
+    func configureTurnout(
+        id: String,
+        name: String,
+        endpoints: [AccessoryEndpoint],
+        positions: [TurnoutPositionDefinition]
+    ) throws {
+        guard let index = document.turnoutDefinitions.firstIndex(where: { $0.id == id }) else {
+            throw LayoutEditError.missingResource(id)
+        }
+        let current = document.turnoutDefinitions[index]
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            throw TurnoutConfigurationError.invalid("Renseignez le nom de l’appareil.")
+        }
+        let endpointIDs = Set(current.endpoints.map(\.id))
+        guard endpoints.count == current.endpoints.count,
+              Set(endpoints.map(\.id)) == endpointIDs,
+              positions.count == current.positions.count,
+              Set(positions.map(\.id)) == Set(current.positions.map(\.id)) else {
+            throw TurnoutConfigurationError.invalid("Les moteurs et positions doivent correspondre à l’appareil.")
+        }
+        var addresses = Set(document.turnoutDefinitions.filter { $0.id != id }
+            .flatMap { $0.endpoints.map(\.linearAddress) })
+        for endpoint in endpoints {
+            guard (1...2040).contains(endpoint.linearAddress) else {
+                throw TurnoutConfigurationError.invalid("Chaque adresse DCC doit être comprise entre 1 et 2040.")
+            }
+            guard addresses.insert(endpoint.linearAddress).inserted else {
+                throw TurnoutConfigurationError.invalid("L’adresse DCC \(endpoint.linearAddress) est déjà utilisée.")
+            }
+        }
+        var vectors: [[String: AccessoryPosition]] = []
+        for position in positions {
+            guard Set(position.endpoints.keys) == endpointIDs else {
+                throw TurnoutConfigurationError.invalid("Chaque position doit définir la commande de tous les moteurs.")
+            }
+            guard !vectors.contains(position.endpoints) else {
+                throw TurnoutConfigurationError.invalid("Deux positions ne peuvent pas utiliser la même combinaison de moteurs.")
+            }
+            vectors.append(position.endpoints)
+        }
+        let updated = TurnoutDefinition(
+            id: id, name: trimmedName, kind: current.kind,
+            endpoints: endpoints, positions: positions
+        )
+        guard updated != current else { return }
+        var definitions = document.turnoutDefinitions
+        definitions[index] = updated
+        performMutation { document.replaceTurnoutDefinitions(definitions) }
+    }
+
     @discardableResult
     func addTurnout(
         id: String = UUID().uuidString,
