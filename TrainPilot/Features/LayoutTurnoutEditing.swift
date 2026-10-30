@@ -123,10 +123,10 @@ extension LayoutEditorController {
         var addresses = Set(document.turnoutDefinitions.filter { $0.id != id }
             .flatMap { $0.endpoints.map(\.linearAddress) })
         for endpoint in endpoints {
-            guard (1...2040).contains(endpoint.linearAddress) else {
+            guard (0...2040).contains(endpoint.linearAddress) else {
                 throw TurnoutConfigurationError.invalid("Chaque adresse DCC doit être comprise entre 1 et 2040.")
             }
-            guard addresses.insert(endpoint.linearAddress).inserted else {
+            guard endpoint.linearAddress == 0 || addresses.insert(endpoint.linearAddress).inserted else {
                 throw TurnoutConfigurationError.invalid("L’adresse DCC \(endpoint.linearAddress) est déjà utilisée.")
             }
         }

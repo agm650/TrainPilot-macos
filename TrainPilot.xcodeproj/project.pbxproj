@@ -76,6 +76,12 @@
 		C7C158253093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */; };
 		C7C158273093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */; };
 		C7C158293093EB5D0078ED2F /* TurnoutOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C158283093EB5D0078ED2F /* TurnoutOperationTests.swift */; };
+		C7C1582B3093F93B0078ED2F /* LayoutBlockConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1582A3093F93B0078ED2F /* LayoutBlockConfiguration.swift */; };
+		C7C1582D3093F93B0078ED2F /* LayoutBlockConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1582C3093F93B0078ED2F /* LayoutBlockConfigurationView.swift */; };
+		C7C1582F3093F9850078ED2F /* LayoutBlockConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1582E3093F9850078ED2F /* LayoutBlockConfigurationTests.swift */; };
+		C7C15831309539E20078ED2F /* LayoutIncompleteArchiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15830309539E20078ED2F /* LayoutIncompleteArchiveTests.swift */; };
+		C7C1583330953A380078ED2F /* LayoutPublicationGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */; };
+		C7C15835309542570078ED2F /* RBusContactAddressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15834309542570078ED2F /* RBusContactAddressTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -160,6 +166,12 @@
 		C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTurnoutConfigurationView.swift; sourceTree = "<group>"; };
 		C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTurnoutConfigurationTests.swift; sourceTree = "<group>"; };
 		C7C158283093EB5D0078ED2F /* TurnoutOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnoutOperationTests.swift; sourceTree = "<group>"; };
+		C7C1582A3093F93B0078ED2F /* LayoutBlockConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutBlockConfiguration.swift; sourceTree = "<group>"; };
+		C7C1582C3093F93B0078ED2F /* LayoutBlockConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutBlockConfigurationView.swift; sourceTree = "<group>"; };
+		C7C1582E3093F9850078ED2F /* LayoutBlockConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutBlockConfigurationTests.swift; sourceTree = "<group>"; };
+		C7C15830309539E20078ED2F /* LayoutIncompleteArchiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutIncompleteArchiveTests.swift; sourceTree = "<group>"; };
+		C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutPublicationGuardTests.swift; sourceTree = "<group>"; };
+		C7C15834309542570078ED2F /* RBusContactAddressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RBusContactAddressTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -234,6 +246,10 @@
 				C7C158223093293B0078ED2F /* NetworkDiagnosticsTests.swift */,
 				C7C158263093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift */,
 				C7C158283093EB5D0078ED2F /* TurnoutOperationTests.swift */,
+				C7C1582E3093F9850078ED2F /* LayoutBlockConfigurationTests.swift */,
+				C7C15830309539E20078ED2F /* LayoutIncompleteArchiveTests.swift */,
+				C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */,
+				C7C15834309542570078ED2F /* RBusContactAddressTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -395,6 +411,8 @@
 				C7C15818309298C70078ED2F /* LayoutTilePalette.swift */,
 				C7C1581C3092A00E0078ED2F /* LayoutSelectionEditing.swift */,
 				C7C158243093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift */,
+				C7C1582A3093F93B0078ED2F /* LayoutBlockConfiguration.swift */,
+				C7C1582C3093F93B0078ED2F /* LayoutBlockConfigurationView.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -531,6 +549,7 @@
 				C7237492304ED0620054808A /* KeychainStore.swift in Sources */,
 				C7237493304ED0620054808A /* FunctionPanel.swift in Sources */,
 				C7AFB24B3068321B0016FE77 /* LayoutBlockEditing.swift in Sources */,
+				C7C1582D3093F93B0078ED2F /* LayoutBlockConfigurationView.swift in Sources */,
 				C7237494304ED0620054808A /* LibraryView.swift in Sources */,
 				C72374A8304ED0B50054808A /* NetworkViewport.swift in Sources */,
 				C7C1581D3092A00E0078ED2F /* LayoutSelectionEditing.swift in Sources */,
@@ -558,6 +577,7 @@
 				C7C158253093E97B0078ED2F /* LayoutTurnoutConfigurationView.swift in Sources */,
 				C7AFB22C30682DF40016FE77 /* LayoutDraftStore.swift in Sources */,
 				C72374A2304ED0620054808A /* AppPreferences.swift in Sources */,
+				C7C1582B3093F93B0078ED2F /* LayoutBlockConfiguration.swift in Sources */,
 				C72374A3304ED0620054808A /* SNCFPalette.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -572,12 +592,15 @@
 				00000000000000000000004A /* SemanticVersionTests.swift in Sources */,
 				00000000000000000000004C /* SequenceTrackerTests.swift in Sources */,
 				C7AFB23B30682F940016FE77 /* LayoutViewportTransformTests.swift in Sources */,
+				C7C15835309542570078ED2F /* RBusContactAddressTests.swift in Sources */,
+				C7C1583330953A380078ED2F /* LayoutPublicationGuardTests.swift in Sources */,
 				C7C158273093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift in Sources */,
 				C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */,
 				C7AFB23D30682F940016FE77 /* TopologyRenderPlanTests.swift in Sources */,
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,
 				C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */,
 				C7C158293093EB5D0078ED2F /* TurnoutOperationTests.swift in Sources */,
+				C7C1582F3093F9850078ED2F /* LayoutBlockConfigurationTests.swift in Sources */,
 				C7AFB22A30682BAD0016FE77 /* LayoutRepositoryTests.swift in Sources */,
 				C7AFB24D3068321B0016FE77 /* LayoutBlockEditingTests.swift in Sources */,
 				C77D642730688F4900A44BB8 /* LayoutStudioTests.swift in Sources */,
@@ -587,6 +610,7 @@
 				C7AFB22F30682DF40016FE77 /* LayoutDraftStoreTests.swift in Sources */,
 				C7C158233093293B0078ED2F /* NetworkDiagnosticsTests.swift in Sources */,
 				C7AFB257306834A20016FE77 /* RuntimeLayoutTests.swift in Sources */,
+				C7C15831309539E20078ED2F /* LayoutIncompleteArchiveTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

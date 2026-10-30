@@ -6,6 +6,32 @@ struct TopologyDefinition: Codable, Equatable, Sendable {
     let trackSections: [TrackSection]
     let turnoutTopologies: [TurnoutTopology]
     let blocks: [BlockDefinition]
+    var occupancyProviders: [LayoutOccupancyProvider]? = nil
+    var occupancySensorMappings: [LayoutSensorMapping]? = nil
+    var feedbackMappings: [LayoutFeedbackMapping]? = nil
+}
+
+struct LayoutOccupancyProvider: Codable, Equatable, Sendable, Identifiable {
+    let id: String
+    let type: String
+    let priority: Int
+    let required: Bool
+    let staleAfter: String
+    let freshnessRequired: Bool
+}
+
+struct LayoutSensorMapping: Codable, Equatable, Sendable {
+    let providerId: String
+    let sensorId: String
+    let blockId: String
+    var required: Bool? = nil
+    var priority: Int? = nil
+}
+
+struct LayoutFeedbackMapping: Codable, Equatable, Sendable {
+    let provider: String
+    let address: Int
+    let blockId: String
 }
 
 struct TopologyNode: Codable, Equatable, Sendable, Identifiable {
@@ -160,6 +186,29 @@ struct AccessoryEndpoint: Codable, Equatable, Sendable, Identifiable {
     let id: String
     let linearAddress: Int
     let inverted: Bool
+
+    init(id: String, linearAddress: Int, inverted: Bool) {
+        self.id = id
+        self.linearAddress = linearAddress
+        self.inverted = inverted
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, linearAddress, inverted }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(String.self, forKey: .id)
+        // Zero is an unassigned address in a local draft, never a command address.
+        linearAddress = try values.decodeIfPresent(Int.self, forKey: .linearAddress) ?? 0
+        inverted = try values.decodeIfPresent(Bool.self, forKey: .inverted) ?? false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(id, forKey: .id)
+        if linearAddress != 0 { try values.encode(linearAddress, forKey: .linearAddress) }
+        try values.encode(inverted, forKey: .inverted)
+    }
 }
 
 struct TurnoutPositionDefinition: Codable, Equatable, Sendable, Identifiable {

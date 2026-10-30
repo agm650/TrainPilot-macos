@@ -3,15 +3,16 @@ import Testing
 @testable import TrainPilot
 
 struct TurnoutOperationTests {
-    private func turnout(kind: String = "simple", status: String = "known", pending: Bool = false) throws -> Turnout {
+    private func turnout(
+        kind: String = "simple", status: String = "known", pending: Bool = false,
+        positions: [String] = ["straight", "diverging"],
+        reportedPosition: String = "straight", commandStatus: String = "idle"
+    ) throws -> Turnout {
         let data = try JSONSerialization.data(withJSONObject: [
             "id": "t1", "name": "Entrée", "kind": kind,
-            "positions": [
-                ["id": "straight", "endpoints": ["main": "position1"]],
-                ["id": "diverging", "endpoints": ["main": "position2"]]
-            ],
-            "desiredPosition": "diverging", "reportedPosition": "straight",
-            "pending": pending, "reportedStatus": status, "commandStatus": "idle"
+            "positions": positions.map { ["id": $0, "endpoints": ["main": "position1"]] },
+            "desiredPosition": "diverging", "reportedPosition": reportedPosition,
+            "pending": pending, "reportedStatus": status, "commandStatus": commandStatus
         ])
         return try JSONDecoder().decode(Turnout.self, from: data)
     }
@@ -23,6 +24,34 @@ struct TurnoutOperationTests {
         #expect(TopologyRuntimeState.toggleTarget(for: try turnout(status: "unknown")) == nil)
         #expect(TopologyRuntimeState.toggleTarget(for: try turnout(status: "invalid")) == nil)
         #expect(TopologyRuntimeState.toggleTarget(for: try turnout(pending: true)) == nil)
+    }
+
+    @Test func tripleClickCyclesThroughAllReportedPositions() throws {
+        let positions = ["straight", "left", "right"]
+        for (current, expected) in [("straight", "left"), ("left", "right"), ("right", "straight")] {
+            let value = try turnout(kind: "three_way", positions: positions, reportedPosition: current)
+            #expect(TopologyRuntimeState.toggleTarget(for: value) == expected)
+        }
+    }
+
+    @Test func tripleClickRequiresKnownPositionAndNoPendingOrFailedCommand() throws {
+        let positions = ["straight", "left", "right"]
+        for status in ["unknown", "invalid"] {
+            #expect(TopologyRuntimeState.toggleTarget(for: try turnout(
+                kind: "three_way", status: status, positions: positions
+            )) == nil)
+        }
+        for command in ["pending", "failed", "timeout"] {
+            #expect(TopologyRuntimeState.toggleTarget(for: try turnout(
+                kind: "three_way", positions: positions, commandStatus: command
+            )) == nil)
+        }
+        #expect(TopologyRuntimeState.toggleTarget(for: try turnout(
+            kind: "three_way", pending: true, positions: positions
+        )) == nil)
+        #expect(TopologyRuntimeState.toggleTarget(for: try turnout(
+            kind: "three_way", positions: positions, reportedPosition: "missing"
+        )) == nil)
     }
 
     @Test func highlightedPathUsesReportedStateAndHidesUnknownPosition() throws {

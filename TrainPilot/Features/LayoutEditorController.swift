@@ -448,7 +448,7 @@ final class LayoutEditorController: ObservableObject {
             LayoutSnapshot(
                 topology: document.topology.replacing(
                     blocks: document.topology.blocks.filter { $0.id != id }
-                ),
+                ).removingDetection(for: id),
                 presentation: document.presentation.replacing(
                     blocks: document.presentation.blocks.filter { $0.blockId != id }
                 )
@@ -527,7 +527,10 @@ extension TopologyDefinition {
             nodes: nodes ?? self.nodes,
             trackSections: trackSections ?? self.trackSections,
             turnoutTopologies: turnoutTopologies ?? self.turnoutTopologies,
-            blocks: blocks ?? self.blocks
+            blocks: blocks ?? self.blocks,
+            occupancyProviders: occupancyProviders,
+            occupancySensorMappings: occupancySensorMappings,
+            feedbackMappings: feedbackMappings
         )
     }
 }

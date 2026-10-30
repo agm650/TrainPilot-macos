@@ -59,6 +59,9 @@ struct LayoutArchiveBuilder {
         layout["trackSections"] = topology["trackSections"]
         layout["turnoutTopologies"] = topology["turnoutTopologies"]
         layout["blocks"] = topology["blocks"]
+        for key in ["occupancyProviders", "occupancySensorMappings", "feedbackMappings"] {
+            if let value = topology[key] { layout[key] = value }
+        }
         layout["turnouts"] = try array(for: document.turnoutDefinitions)
         var presentation = try dictionary(for: document.presentation)
         presentation.removeValue(forKey: "revision")

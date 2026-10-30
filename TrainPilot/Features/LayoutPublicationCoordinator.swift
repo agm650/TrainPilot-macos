@@ -131,6 +131,13 @@ final class LayoutPublicationCoordinator: ObservableObject {
             serverSnapshot: serverSnapshot,
             allowingConflict: allowingConflict
         )
+        let issues = TurnoutValidator().validate(
+            definitions: document.turnoutDefinitions,
+            topology: document.topology, presentation: document.presentation
+        )
+        guard issues.isEmpty else {
+            throw StudioPublicationError.validation("Configurez les adresses DCC et les positions des appareils avant de publier.")
+        }
         try await document.prepareForValidationOrPublication()
         state = .validating
         document.setValidationState(.validating)

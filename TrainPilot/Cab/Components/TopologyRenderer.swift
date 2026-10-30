@@ -8,6 +8,7 @@ enum LayoutInteractionMode: Equatable {
 struct TopologyRuntimeState: Equatable, Sendable {
     enum OccupancyEmphasis: Equatable {
         case none
+        case free
         case unknown
         case occupied
     }
@@ -46,19 +47,21 @@ struct TopologyRuntimeState: Equatable, Sendable {
     }
 
     func occupancyEmphasis(for blockIDs: [String]) -> OccupancyEmphasis {
-        let states = blockIDs.compactMap { blockOccupancy[$0] }
+        guard !blockIDs.isEmpty else { return .none }
+        let states = blockIDs.map { blockOccupancy[$0] ?? .unknown }
         if states.contains(.occupied) { return .occupied }
         if states.contains(.unknown) { return .unknown }
-        return .none
+        return .free
     }
 
     static func toggleTarget(for turnout: Turnout) -> String? {
-        guard turnout.kind == .simple, turnout.positions.count == 2,
+        guard (turnout.kind == .simple && turnout.positions.count == 2) ||
+                (turnout.kind == .threeWay && turnout.positions.count == 3),
               turnout.reportedStatus == .known,
               !turnout.pending, turnout.commandStatus != .pending,
               turnout.commandStatus != .failed, turnout.commandStatus != .timeout,
-              turnout.positions.contains(where: { $0.id == turnout.reportedPosition }) else { return nil }
-        return turnout.positions.first { $0.id != turnout.reportedPosition }?.id
+              let currentIndex = turnout.positions.firstIndex(where: { $0.id == turnout.reportedPosition }) else { return nil }
+        return turnout.positions[(currentIndex + 1) % turnout.positions.count].id
     }
 
     func turnoutVisualState(for id: String) -> TurnoutVisualState {
@@ -211,8 +214,6 @@ struct TopologyRenderer: View {
             if showsGrid {
                 drawGrid(context: &context, size: size)
             }
-            drawBlockOverlays(context: &context)
-            drawOccupancy(context: &context)
             for track in plan.tracks where selectedElements.contains(.trackSection(track.id)) {
                 context.stroke(trackPath(track), with: .color(.accentColor.opacity(0.65)),
                                style: StrokeStyle(lineWidth: 8 * transform.zoom, lineCap: .round))
@@ -227,32 +228,15 @@ struct TopologyRenderer: View {
         .accessibilityLabel("Plan du réseau")
     }
 
-    private func drawOccupancy(context: inout GraphicsContext) {
-        for track in plan.tracks {
-            switch runtime.occupancyEmphasis(for: track.blockIDs) {
-            case .occupied:
-                context.stroke(
-                    trackPath(track),
-                    with: .color(.red.opacity(0.9)),
-                    style: StrokeStyle(
-                        lineWidth: max(5, 9 * transform.zoom),
-                        lineCap: .round,
-                        lineJoin: .round
-                    )
-                )
-            case .unknown:
-                context.stroke(
-                    trackPath(track),
-                    with: .color(.yellow.opacity(0.8)),
-                    style: StrokeStyle(
-                        lineWidth: max(4, 7 * transform.zoom),
-                        lineCap: .round,
-                        dash: [6, 5]
-                    )
-                )
-            case .none:
-                break
-            }
+    private func railColor(blockIDs: [String], defaultColor: Color) -> Color {
+        guard mode == .operationalReadOnly else {
+            return blockIDs.isEmpty ? defaultColor : .yellow
+        }
+        switch runtime.occupancyEmphasis(for: blockIDs) {
+        case .none: return defaultColor
+        case .unknown: return .yellow
+        case .free: return .green
+        case .occupied: return .red
         }
     }
 
@@ -283,28 +267,13 @@ struct TopologyRenderer: View {
         )
     }
 
-    private func drawBlockOverlays(context: inout GraphicsContext) {
-        for track in plan.tracks {
-            let path = trackPath(track)
-            for style in track.blockStyles {
-                context.stroke(
-                    path,
-                    with: .color(Color(hex: style.color).opacity(style.opacity)),
-                    style: StrokeStyle(
-                        lineWidth: 14 * transform.zoom,
-                        lineCap: .round,
-                        lineJoin: .round
-                    )
-                )
-            }
-        }
-    }
+
 
     private func drawTracks(context: inout GraphicsContext) {
         for track in plan.tracks {
             context.stroke(
                 trackPath(track),
-                with: .color(.primary.opacity(0.88)),
+                with: .color(railColor(blockIDs: track.blockIDs, defaultColor: .primary.opacity(0.88))),
                 style: StrokeStyle(
                     lineWidth: max(2, 3 * transform.zoom),
                     lineCap: .round,
@@ -333,12 +302,6 @@ struct TopologyRenderer: View {
                 context.stroke(Path(ellipseIn: rect.insetBy(dx: -4, dy: -4)),
                                with: .color(.accentColor), lineWidth: 3)
             }
-            for style in turnout.blockStyles {
-                context.fill(
-                    Path(ellipseIn: rect.insetBy(dx: -6, dy: -6)),
-                    with: .color(Color(hex: style.color).opacity(style.opacity))
-                )
-            }
             var geometry = Path()
             for port in turnout.ports {
                 geometry.move(to: center)
@@ -348,7 +311,7 @@ struct TopologyRenderer: View {
             }
             context.stroke(
                 geometry,
-                with: .color(.primary.opacity(0.9)),
+                with: .color(railColor(blockIDs: turnout.blockIDs, defaultColor: .primary.opacity(0.9))),
                 style: StrokeStyle(
                     lineWidth: max(2, 3 * transform.zoom),
                     lineCap: .round,

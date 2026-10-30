@@ -74,20 +74,42 @@ struct LayoutStudioArchiveService {
     }
 
     func read(from url: URL) throws -> Contents {
-        let entries = try ZIPContainer.read(Data(contentsOf: url))
+        try read(data: Data(contentsOf: url))
+    }
+
+    func read(data: Data) throws -> Contents {
+        let entries = try ZIPContainer.read(data)
         guard entries["manifest.json"] != nil else {
             throw LayoutArchiveError.missingEntry("manifest.json")
         }
         guard let data = entries["layout.json"],
               let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              var topology = root["layout"] as? [String: Any],
-              var presentation = (topology["presentation"] ?? root["presentation"]) as? [String: Any] else {
+              var topology = root["layout"] as? [String: Any] else {
             throw LayoutArchiveError.invalidLayoutDocument
         }
 
-        let turnoutsData = try JSONSerialization.data(
-            withJSONObject: topology["turnouts"] ?? []
-        )
+        var presentation = (topology["presentation"] ?? root["presentation"]) as? [String: Any] ?? [:]
+        for key in ["nodes", "trackSections", "turnoutTopologies", "blocks", "turnouts"] {
+            if topology[key] == nil || topology[key] is NSNull { topology[key] = [] }
+        }
+        for key in ["nodes", "trackSections", "turnouts", "blocks"] {
+            if presentation[key] == nil || presentation[key] is NSNull { presentation[key] = [] }
+        }
+        presentation["coordinateSystem"] = presentation["coordinateSystem"] ?? "layout-units"
+        presentation["gridSpacing"] = presentation["gridSpacing"] ?? 20
+        if var definitions = topology["turnouts"] as? [[String: Any]] {
+            for index in definitions.indices {
+                for key in ["endpoints", "positions"] {
+                    if definitions[index][key] == nil || definitions[index][key] is NSNull {
+                        definitions[index][key] = []
+                    }
+                }
+                definitions[index]["name"] = definitions[index]["name"] ?? definitions[index]["id"]
+                definitions[index]["kind"] = definitions[index]["kind"] ?? "custom"
+            }
+            topology["turnouts"] = definitions
+        }
+        let turnoutsData = try JSONSerialization.data(withJSONObject: topology["turnouts"] ?? [])
         let turnouts = try JSONDecoder().decode(
             [TurnoutDefinition].self,
             from: turnoutsData
@@ -222,8 +244,12 @@ final class LayoutStudioSession: ObservableObject {
                 return
             }
             // Adopt the confirmed revisions so subsequent publications use the new base.
+            var topology = snapshot.topology
+            topology.occupancyProviders = document.topology.occupancyProviders
+            topology.occupancySensorMappings = document.topology.occupancySensorMappings
+            topology.feedbackMappings = document.topology.feedbackMappings
             replaceDocument(
-                snapshot: snapshot,
+                snapshot: LayoutSnapshot(topology: topology, presentation: snapshot.presentation),
                 turnouts: document.turnoutDefinitions,
                 name: documentName,
                 origin: .server(ServerLayoutReference(serverIdentity: document.serverIdentity))
@@ -299,6 +325,15 @@ final class LayoutStudioSession: ObservableObject {
             topology: controller.document.topology,
             presentation: controller.document.presentation
         )
+        let turnoutIssues = TurnoutValidator().validate(
+            definitions: controller.document.turnoutDefinitions,
+            topology: controller.document.topology,
+            presentation: controller.document.presentation
+        )
+        if !turnoutIssues.isEmpty {
+            message = "Brouillon incomplet : vérifiez les adresses DCC et les positions des appareils avant publication."
+            return
+        }
         message = trackIssues.isEmpty && blockIssues.isEmpty
             ? "Validation locale réussie."
             : "La validation locale a détecté \(trackIssues.count + blockIssues.count) problème(s)."
@@ -406,13 +441,16 @@ private struct LayoutStudioToolbar: View {
 
 
 
-            Button {
-                controller.selectTool(.block)
-            } label: {
-                Image(systemName: "rectangle.3.group")
+            Button("Créer un canton") {
+                do { try controller.createBlockFromSelection() }
+                catch { session.message = error.localizedDescription }
             }
-            .help("Block")
-            .tint(controller.tool == .block ? .accentColor : nil)
+            .disabled(controller.selectedElements.isEmpty)
+            Menu("Cantons") {
+                ForEach(controller.document.topology.blocks) { block in
+                    Button(block.name) { controller.select(.block(block.id)) }
+                }
+            }
             Divider().frame(height: 22)
             Button(action: controller.undo) {
                 Image(systemName: "arrow.uturn.backward")
@@ -581,7 +619,8 @@ private struct LayoutStudioInspector: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
             LayoutStudioDocumentInspector(
                 revision: document.topology.revision,
                 gridSpacing: document.presentation.gridSpacing
@@ -589,20 +628,24 @@ private struct LayoutStudioInspector: View {
             Divider()
             LayoutStudioSelectionInspector(description: selectionDescription)
             LayoutStudioSelectionControls(controller: controller)
+            if case .block(let id) = controller.selection,
+               let block = document.topology.blocks.first(where: { $0.id == id }) {
+                LayoutBlockConfigurationView(controller: controller, document: document, block: block)
+                    .id(id)
+            }
             if controller.selectedElements.count == 1,
                case .turnout(let id) = controller.selection,
                let definition = document.turnoutDefinitions.first(where: { $0.id == id }) {
-                ScrollView {
-                    LayoutTurnoutConfigurationView(controller: controller, definition: definition)
-                        .id(id)
-                        .padding(.vertical, 4)
-                }
+                LayoutTurnoutConfigurationView(controller: controller, definition: definition)
+                    .id(id)
+                    .padding(.vertical, 4)
             }
             Divider()
             LayoutStudioValidationInspector(message: message)
-            Spacer()
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .padding()
     }
 
     private var selectionDescription: String {
@@ -613,7 +656,7 @@ private struct LayoutStudioInspector: View {
         case .noSelection: return "Aucune sélection"
         case .trackSection(let id): return "Voie \(id)"
         case .turnout(let id): return "Aiguillage \(id)"
-        case .block(let id): return "Block \(id)"
+        case .block(let id): return "Canton \(id)"
         case .node(let id): return "Nœud \(id)"
         }
     }

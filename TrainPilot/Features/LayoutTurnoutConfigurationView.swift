@@ -14,7 +14,7 @@ struct LayoutTurnoutConfigurationView: View {
         self.definition = definition
         _name = State(initialValue: definition.name)
         _addresses = State(initialValue: Dictionary(uniqueKeysWithValues:
-            definition.endpoints.map { ($0.id, String($0.linearAddress)) }))
+            definition.endpoints.map { ($0.id, $0.linearAddress == 0 ? "" : String($0.linearAddress)) }))
         _inversions = State(initialValue: Dictionary(uniqueKeysWithValues:
             definition.endpoints.map { ($0.id, $0.inverted) }))
         _mappings = State(initialValue: Dictionary(uniqueKeysWithValues:
@@ -40,6 +40,8 @@ struct LayoutTurnoutConfigurationView: View {
                     ))
                 }
             }
+            Text("Adresse vide : moteur non configuré, publication bloquée.")
+                .font(.caption).foregroundColor(.secondary)
             Divider()
             Text("Positions et commandes").font(.headline)
             Text("L’inversion échange les commandes 1 et 2 du moteur concerné.")
@@ -85,7 +87,7 @@ struct LayoutTurnoutConfigurationView: View {
     private func reset() {
         name = definition.name
         addresses = Dictionary(uniqueKeysWithValues:
-            definition.endpoints.map { ($0.id, String($0.linearAddress)) })
+            definition.endpoints.map { ($0.id, $0.linearAddress == 0 ? "" : String($0.linearAddress)) })
         inversions = Dictionary(uniqueKeysWithValues:
             definition.endpoints.map { ($0.id, $0.inverted) })
         mappings = Dictionary(uniqueKeysWithValues:
@@ -96,8 +98,8 @@ struct LayoutTurnoutConfigurationView: View {
     private func apply() {
         do {
             let endpoints = try definition.endpoints.map { endpoint in
-                guard let address = Int((addresses[endpoint.id] ?? "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)) else {
+                let input = (addresses[endpoint.id] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let address = input.isEmpty ? 0 : Int(input), input.isEmpty || address > 0 else {
                     throw TurnoutConfigurationError.invalid("Renseignez une adresse entière pour chaque moteur.")
                 }
                 return AccessoryEndpoint(

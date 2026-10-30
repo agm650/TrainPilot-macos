@@ -43,6 +43,26 @@ final class WindowCoordinator: NSObject, NSWindowDelegate {
     }
 
     func showLayoutStudio(appModel: AppModel) {
+        if let layoutStudioWindow {
+            layoutStudioWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+        guard appModel.isAdministrator, appModel.connectionState == .ready else {
+            openLayoutStudio(appModel: appModel, archiveContents: nil)
+            return
+        }
+        Task {
+            guard let archive = await appModel.exportCurrentLayout() else { return }
+            do {
+                let contents = try LayoutStudioArchiveService().read(data: archive.data)
+                openLayoutStudio(appModel: appModel, archiveContents: contents)
+            } catch {
+                showInformation(title: "Ouverture impossible", message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func openLayoutStudio(appModel: AppModel, archiveContents: LayoutStudioArchiveService.Contents?) {
         guard LayoutStudioAccessPolicy.canOpen(currentUser: appModel.currentUser) else {
             return
         }
@@ -53,8 +73,16 @@ final class WindowCoordinator: NSObject, NSWindowDelegate {
             return
         }
 
+        var snapshot = appModel.isAdministrator ? appModel.layoutRepository?.snapshot : nil
+        if let contents = archiveContents {
+            var topology = snapshot?.topology ?? contents.snapshot.topology
+            topology.occupancyProviders = contents.snapshot.topology.occupancyProviders ?? []
+            topology.occupancySensorMappings = contents.snapshot.topology.occupancySensorMappings ?? []
+            topology.feedbackMappings = contents.snapshot.topology.feedbackMappings ?? []
+            snapshot = LayoutSnapshot(topology: topology, presentation: snapshot?.presentation ?? contents.snapshot.presentation)
+        }
         let session = LayoutStudioSession(
-            snapshot: appModel.isAdministrator ? appModel.layoutRepository?.snapshot : nil,
+            snapshot: snapshot,
             turnouts: appModel.isAdministrator ? appModel.turnouts.compactMap { turnout in
                 guard let kind = turnout.kind else { return nil }
                 return TurnoutDefinition(
