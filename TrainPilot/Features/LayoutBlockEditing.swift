@@ -102,6 +102,22 @@ extension LayoutEditorController {
         return id
     }
 
+    func chooseBlockColor(blockID: String, hex: String) throws {
+        guard let color = LayoutBlockPaletteColor.matching(hex) else {
+            throw TurnoutConfigurationError.invalid("Choisissez une couleur dans la palette ; le rouge est réservé à l’occupation.")
+        }
+        guard document.topology.blocks.contains(where: { $0.id == blockID }) else {
+            throw LayoutEditError.missingResource(blockID)
+        }
+        let existing = document.presentation.blocks.first { $0.blockId == blockID }
+        let style = LayoutBlockStyle(blockId: blockID, color: color.hex, opacity: existing?.opacity ?? 0.6)
+        guard existing != style else { return }
+        let styles = document.presentation.blocks.filter { $0.blockId != blockID } + [style]
+        performMutation {
+            document.replacePresentation(document.presentation.replacing(blocks: styles))
+        }
+    }
+
     func updateBlockStyle(
         blockID: String,
         color: String,

@@ -214,9 +214,9 @@ struct TopologyRenderer: View {
             if showsGrid {
                 drawGrid(context: &context, size: size)
             }
-            for track in plan.tracks where selectedElements.contains(.trackSection(track.id)) {
+            for track in plan.tracks where isHighlighted(.trackSection(track.id), blockIDs: track.blockIDs) {
                 context.stroke(trackPath(track), with: .color(.accentColor.opacity(0.65)),
-                               style: StrokeStyle(lineWidth: 8 * transform.zoom, lineCap: .round))
+                               style: StrokeStyle(lineWidth: max(8, 8 * transform.zoom), lineCap: .round))
             }
             drawTracks(context: &context)
             drawTurnouts(context: &context)
@@ -228,14 +228,20 @@ struct TopologyRenderer: View {
         .accessibilityLabel("Plan du réseau")
     }
 
-    private func railColor(blockIDs: [String], defaultColor: Color) -> Color {
+    func isHighlighted(_ element: LayoutEditorSelection, blockIDs: [String]) -> Bool {
+        guard mode != .operationalReadOnly else { return false }
+        return selectedElements.contains(element) || blockIDs.contains { selectedElements.contains(.block($0)) }
+    }
+
+    func railColor(blockIDs: [String], styles: [LayoutBlockStyle], defaultColor: Color) -> Color {
+        let blockColor = Color(hex: LayoutBlockPaletteColor.displayHex(styles.first?.color))
         guard mode == .operationalReadOnly else {
-            return blockIDs.isEmpty ? defaultColor : .yellow
+            return blockIDs.isEmpty ? defaultColor : blockColor
         }
         switch runtime.occupancyEmphasis(for: blockIDs) {
         case .none: return defaultColor
         case .unknown: return .yellow
-        case .free: return .green
+        case .free: return blockColor
         case .occupied: return .red
         }
     }
@@ -273,7 +279,7 @@ struct TopologyRenderer: View {
         for track in plan.tracks {
             context.stroke(
                 trackPath(track),
-                with: .color(railColor(blockIDs: track.blockIDs, defaultColor: .primary.opacity(0.88))),
+                with: .color(railColor(blockIDs: track.blockIDs, styles: track.blockStyles, defaultColor: .primary.opacity(0.88))),
                 style: StrokeStyle(
                     lineWidth: max(2, 3 * transform.zoom),
                     lineCap: .round,
@@ -298,7 +304,7 @@ struct TopologyRenderer: View {
                 width: radius * 2,
                 height: radius * 2
             )
-            if selectedElements.contains(.turnout(turnout.id)) {
+            if isHighlighted(.turnout(turnout.id), blockIDs: turnout.blockIDs) {
                 context.stroke(Path(ellipseIn: rect.insetBy(dx: -4, dy: -4)),
                                with: .color(.accentColor), lineWidth: 3)
             }
@@ -309,9 +315,13 @@ struct TopologyRenderer: View {
                     to: transform.canvasPoint(for: port)
                 )
             }
+            if isHighlighted(.turnout(turnout.id), blockIDs: turnout.blockIDs) {
+                context.stroke(geometry, with: .color(.accentColor.opacity(0.65)),
+                               style: StrokeStyle(lineWidth: max(8, 8 * transform.zoom), lineCap: .round))
+            }
             context.stroke(
                 geometry,
-                with: .color(railColor(blockIDs: turnout.blockIDs, defaultColor: .primary.opacity(0.9))),
+                with: .color(railColor(blockIDs: turnout.blockIDs, styles: turnout.blockStyles, defaultColor: .primary.opacity(0.9))),
                 style: StrokeStyle(
                     lineWidth: max(2, 3 * transform.zoom),
                     lineCap: .round,
@@ -330,7 +340,8 @@ struct TopologyRenderer: View {
                     context.stroke(active, with: .color(.black),
                                    style: StrokeStyle(lineWidth: max(7, 7 * transform.zoom),
                                                       lineCap: .round, lineJoin: .round))
-                    context.stroke(active, with: .color(Color(red: 0.1, green: 1, blue: 0.15)),
+                    context.stroke(active, with: .color(railColor(blockIDs: turnout.blockIDs, styles: turnout.blockStyles,
+                                                         defaultColor: Color(red: 0.1, green: 1, blue: 0.15))),
                                    style: StrokeStyle(lineWidth: max(4, 4 * transform.zoom),
                                                       lineCap: .round, lineJoin: .round))
                 }
@@ -357,7 +368,8 @@ struct TopologyRenderer: View {
                         else { symbol.addLine(to: tip) }
                     }
                 }
-                context.stroke(symbol, with: .color(Color(red: 0.1, green: 1, blue: 0.15)),
+                context.stroke(symbol, with: .color(railColor(blockIDs: turnout.blockIDs, styles: turnout.blockStyles,
+                                                         defaultColor: Color(red: 0.1, green: 1, blue: 0.15))),
                                style: StrokeStyle(lineWidth: max(2.5, radius * 0.2),
                                                   lineCap: .round, lineJoin: .round))
             }
@@ -423,7 +435,7 @@ struct TopologyRenderer: View {
     }
 }
 
-private extension Color {
+extension Color {
     init(hex: String) {
         let value = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
         let number = UInt64(value, radix: 16) ?? 0

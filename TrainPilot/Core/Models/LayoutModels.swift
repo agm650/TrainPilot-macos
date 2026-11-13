@@ -163,6 +163,46 @@ struct LayoutTurnoutPresentation: Codable, Equatable, Sendable {
     let mirrored: Bool
 }
 
+struct LayoutBlockPaletteColor: Identifiable, Equatable, Sendable {
+    let name: String
+    let hex: String
+    var id: String { hex }
+
+    static let defaultHex = "#33AADD"
+    // Deliberately excludes reds, oranges, pinks and magentas.
+    static let all: [Self] = [
+        .init(name: "Azur", hex: "#33AADD"),
+        .init(name: "Bleu ciel", hex: "#77C8F0"),
+        .init(name: "Bleu", hex: "#2979D6"),
+        .init(name: "Bleu roi", hex: "#4055D8"),
+        .init(name: "Indigo", hex: "#6255C7"),
+        .init(name: "Pervenche", hex: "#9294E8"),
+        .init(name: "Lavande", hex: "#B5A6E8"),
+        .init(name: "Cyan", hex: "#24C9D6"),
+        .init(name: "Turquoise", hex: "#26B9AA"),
+        .init(name: "Sarcelle", hex: "#248A88"),
+        .init(name: "Menthe", hex: "#87D9BB"),
+        .init(name: "Émeraude", hex: "#29A977"),
+        .init(name: "Vert", hex: "#4BA64F"),
+        .init(name: "Vert prairie", hex: "#7CBD50"),
+        .init(name: "Vert anis", hex: "#B3CE55"),
+        .init(name: "Olive", hex: "#92964D"),
+        .init(name: "Sauge", hex: "#92AF91"),
+        .init(name: "Bleu ardoise", hex: "#708CA8"),
+        .init(name: "Gris", hex: "#999FA8"),
+        .init(name: "Argent", hex: "#C6CCD4")
+    ]
+
+    static func matching(_ hex: String) -> Self? {
+        all.first { $0.hex == hex.uppercased() }
+    }
+
+    static func displayHex(_ hex: String?) -> String {
+        // Older/imported layouts cannot use red to masquerade as an occupied block.
+        hex.flatMap { matching($0)?.hex } ?? defaultHex
+    }
+}
+
 struct LayoutBlockStyle: Codable, Equatable, Sendable {
     let blockId: String
     let color: String

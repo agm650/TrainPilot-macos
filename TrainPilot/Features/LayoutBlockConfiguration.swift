@@ -28,6 +28,11 @@ struct RBusContactAddress: Equatable {
     }
 }
 
+private struct BlockContactIdentity: Hashable {
+    let provider: String
+    let sensor: String
+}
+
 extension LayoutEditorController {
     func createBlockFromSelection() throws {
         let tracks = selectedElements.compactMap { selection -> String? in
@@ -70,9 +75,15 @@ extension LayoutEditorController {
             throw TurnoutConfigurationError.invalid("Renseignez un nom, une source et une adresse de contact entière positive.")
         }
         let topology = document.topology
-        let mappingCount = (topology.feedbackMappings ?? []).filter { $0.blockId == id }.count
-            + (topology.occupancySensorMappings ?? []).filter { $0.blockId == id }.count
-        guard mappingCount <= 1 else {
+        // Legacy and generic mappings can describe the same physical contact.
+        // Count distinct provider/sensor pairs, not their serialized representations.
+        let legacyContacts = (topology.feedbackMappings ?? []).filter { $0.blockId == id }.map {
+            BlockContactIdentity(provider: $0.provider, sensor: String($0.address))
+        }
+        let genericContacts = (topology.occupancySensorMappings ?? []).filter { $0.blockId == id }.map {
+            BlockContactIdentity(provider: $0.providerId, sensor: $0.sensorId)
+        }
+        guard Set(legacyContacts + genericContacts).count <= 1 else {
             throw TurnoutConfigurationError.invalid("Ce canton possède plusieurs détecteurs. Cette version du formulaire ne modifie que les cantons à un seul contact.")
         }
         guard topology.blocks.contains(where: { $0.id == id }) else { throw LayoutEditError.missingResource(id) }

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import TrainPilot
 
@@ -167,6 +168,123 @@ struct LayoutBlockConfigurationTests {
         let next = try RBusContactAddress(detector: 3, input: 6).globalAddress()
         try reopened.configureBlock(id: second.id, name: "Autre", source: "z21-rbus", address: String(next))
         #expect(reopened.document.topology.feedbackMappings?.count == 2)
+    }
+
+    @Test func paletteColorSurvivesUndoAndArchiveWithoutChangingDetection() throws {
+        let controller = try controller()
+        try controller.createBlockFromSelection()
+        let block = try #require(controller.document.topology.blocks.first)
+        let original = controller.document.presentation
+        let topology = controller.document.topology
+        try controller.chooseBlockColor(blockID: block.id, hex: "#29a977")
+        #expect(controller.document.presentation.blocks.first?.color == "#29A977")
+        #expect(controller.document.topology == topology)
+        controller.undo()
+        #expect(controller.document.presentation == original)
+        controller.redo()
+        let archive = try LayoutStudioArchiveService().archive(for: controller.document, filename: "color.dcclayout")
+        let loaded = try LayoutStudioArchiveService().read(data: archive.data)
+        #expect(loaded.snapshot.presentation.blocks.first?.color == "#29A977")
+        for forbidden in ["#FF0000", "#D02020", "#FF8800", "#FF99AA", "invalid"] {
+            #expect(throws: TurnoutConfigurationError.self) {
+                try controller.chooseBlockColor(blockID: block.id, hex: forbidden)
+            }
+        }
+        #expect(controller.document.presentation.blocks.first?.color == "#29A977")
+    }
+
+    @Test func paletteContainsTwentyDistinctSafeColors() throws {
+        #expect(LayoutBlockPaletteColor.all.count == 20)
+        #expect(Set(LayoutBlockPaletteColor.all.map(\.hex)).count == 20)
+        for color in LayoutBlockPaletteColor.all {
+            let rgb = try #require(UInt32(color.hex.dropFirst(), radix: 16))
+            let red = (rgb >> 16) & 255
+            let green = (rgb >> 8) & 255
+            let blue = rgb & 255
+            #expect(red <= max(green, blue))
+            #expect(LayoutBlockPaletteColor.displayHex(color.hex) == color.hex)
+        }
+        #expect(LayoutBlockPaletteColor.displayHex("#FF0000") == LayoutBlockPaletteColor.defaultHex)
+    }
+
+    @Test func blockSelectionAndRuntimeColors() throws {
+        let controller = try controller()
+        try controller.createBlockFromSelection()
+        let block = try #require(controller.document.topology.blocks.first)
+        let plan = TopologyRenderPlan(topology: controller.document.topology, presentation: controller.document.presentation)
+        var renderer = TopologyRenderer(plan: plan, transform: LayoutViewportTransform(),
+                                        mode: .editor(showHandles: true), gridSpacing: 20, showsGrid: false)
+        renderer.selectedElements = [.block(block.id)]
+        #expect(renderer.isHighlighted(.trackSection("ab"), blockIDs: [block.id]))
+        #expect(renderer.isHighlighted(.turnout("t"), blockIDs: [block.id]))
+        #expect(!renderer.isHighlighted(.trackSection("bc"), blockIDs: []))
+        let styles = [LayoutBlockStyle(blockId: block.id, color: "#29A977", opacity: 0)]
+        #expect(renderer.railColor(blockIDs: [block.id], styles: styles, defaultColor: .primary) == Color(hex: "#29A977"))
+        renderer = TopologyRenderer(plan: plan, transform: LayoutViewportTransform(),
+                                    mode: .operationalReadOnly, gridSpacing: 20, showsGrid: false)
+        for state: BlockOccupancyState in [.free, .occupied, .free, .unknown] {
+            renderer.runtime = TopologyRuntimeState(blockOccupancy: [block.id: state], turnoutStates: [:])
+            let expected: Color = state == .occupied ? .red : state == .unknown ? .yellow : Color(hex: "#29A977")
+            #expect(renderer.railColor(blockIDs: [block.id], styles: styles, defaultColor: .primary) == expected)
+        }
+        renderer.selectedElements = [.block(block.id)]
+        #expect(!renderer.isHighlighted(.trackSection("ab"), blockIDs: [block.id]))
+    }
+
+    @Test(arguments: [false, true])
+    func changingCantonContactUsesDetectorAndInput(_ mirroredMappings: Bool) throws {
+        let controller = try controller()
+        let a = controller.addBlock(name: "A")
+        let b = controller.addBlock(name: "B")
+        let c = controller.addBlock(name: "C")
+        for (id, name, detector, input) in [(a, "A", 2, 1), (b, "B", 1, 2), (c, "C", 1, 3)] {
+            let address = try RBusContactAddress(detector: detector, input: input).globalAddress()
+            try controller.configureBlock(id: id, name: name, source: "z21-rbus", address: String(address))
+        }
+        if mirroredMappings {
+            var topology = controller.document.topology
+            topology.occupancySensorMappings = topology.feedbackMappings?.map {
+                LayoutSensorMapping(providerId: $0.provider, sensorId: String($0.address), blockId: $0.blockId)
+            }
+            controller.document.replaceTopology(topology)
+        }
+        let archive = try LayoutStudioArchiveService().archive(for: controller.document, filename: "contacts.dcclayout")
+        let contents = try LayoutStudioArchiveService().read(data: archive.data)
+        let reopened = LayoutStudioSession(snapshot: contents.snapshot, canPublish: false).controller
+        let before = reopened.document.topology
+        try reopened.configureBlock(id: c, name: "C", source: "z21-rbus", address: "1")
+        #expect(reopened.document.topology.feedbackMappings?.first { $0.blockId == c }?.address == 1)
+        #expect(reopened.document.topology.feedbackMappings?.first { $0.blockId == a }?.address == 9)
+        #expect(reopened.document.topology.feedbackMappings?.first { $0.blockId == b }?.address == 2)
+        #expect(reopened.document.topology.occupancySensorMappings?.contains { $0.blockId == c } == false)
+        let changed = reopened.document.topology
+        for address in ["2", "9"] {
+            #expect(throws: TurnoutConfigurationError.self) {
+                try reopened.configureBlock(id: c, name: "C", source: "z21-rbus", address: address)
+            }
+            #expect(reopened.document.topology == changed)
+        }
+        reopened.undo()
+        #expect(reopened.document.topology == before)
+        reopened.redo()
+        #expect(reopened.document.topology == changed)
+    }
+
+    @Test(arguments: [false, true])
+    func genuinelyDifferentContactsRemainProtected(_ differentProvider: Bool) throws {
+        let controller = try controller()
+        let id = controller.addBlock(name: "Plusieurs contacts")
+        try controller.configureBlock(id: id, name: "Plusieurs contacts", source: "z21-rbus", address: "3")
+        var topology = controller.document.topology
+        topology.occupancySensorMappings = [
+            LayoutSensorMapping(providerId: differentProvider ? "other-provider" : "z21-rbus",
+                                sensorId: differentProvider ? "3" : "4", blockId: id)
+        ]
+        controller.document.replaceTopology(topology)
+        #expect(throws: TurnoutConfigurationError.self) {
+            try controller.configureBlock(id: id, name: "Modifié", source: "z21-rbus", address: "1")
+        }
+        #expect(controller.document.topology == topology)
     }
 
     @Test func occupancyIncludesFreeAndMissingIsUnknown() {
