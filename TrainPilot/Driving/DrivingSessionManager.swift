@@ -5,6 +5,7 @@ import Combine
 final class DrivingSessionManager: ObservableObject {
     @Published private(set) var sessions: [String: DrivingSession] = [:]
     @Published var activeLocomotiveID: String?
+    private var leaseObservations: [String: AnyCancellable] = [:]
 
     var activeSession: DrivingSession? {
         guard let activeLocomotiveID else { return nil }
@@ -25,6 +26,9 @@ final class DrivingSessionManager: ObservableObject {
         }
 
         let session = DrivingSession(locomotive: locomotive, lease: lease)
+        leaseObservations[locomotive.id] = session.$lease.dropFirst().sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
         sessions[locomotive.id] = session
 
         if makeActive || activeLocomotiveID == nil {
@@ -34,6 +38,7 @@ final class DrivingSessionManager: ObservableObject {
     }
 
     func remove(locomotiveID: String) {
+        leaseObservations.removeValue(forKey: locomotiveID)
         sessions.removeValue(forKey: locomotiveID)
         if activeLocomotiveID == locomotiveID {
             activeLocomotiveID = sortedSessions.first?.locomotive.id
@@ -41,12 +46,13 @@ final class DrivingSessionManager: ObservableObject {
     }
 
     func removeAll() {
+        leaseObservations.removeAll()
         sessions.removeAll()
         activeLocomotiveID = nil
     }
 
     func select(locomotiveID: String) {
-        guard sessions[locomotiveID] != nil else { return }
+        guard sessions[locomotiveID]?.lease.state == "active" else { return }
         activeLocomotiveID = locomotiveID
     }
 }

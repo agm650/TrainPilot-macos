@@ -290,6 +290,8 @@ private struct LocomotiveRow: View {
                 )
             }
 
+            .disabled(session.lease.state != "active")
+
             Button("Libérer") {
                 Task {
                     await appModel.release(

@@ -51,6 +51,7 @@ final class AppModel: ObservableObject {
     private var throttleTasks: [String: Task<Void, Never>] = [:]
     private var leaseHeartbeatTasks: [String: Task<Void, Never>] = [:]
 
+    private var drivingObservation: AnyCancellable?
     private var currentSessionID: String?
     private var isLoggingOut = false
     private var restoreAttempted = false
@@ -61,6 +62,10 @@ final class AppModel: ObservableObject {
     ) {
         self.preferences = preferences
         self.layoutDraftStore = layoutDraftStore
+        // ObservableObject does not automatically observe nested objects on macOS 12.
+        drivingObservation = driving.objectWillChange.sink { [weak self] in
+            self?.objectWillChange.send()
+        }
     }
 
     var isAdministrator: Bool {
@@ -480,10 +485,9 @@ final class AppModel: ObservableObject {
             return
         }
 
+        guard session.lease.state == "active" else { return }
+        markLeaseStopping(leaseID: session.lease.id, locomotiveID: locomotiveID)
         do {
-            session.requestedSpeed = 0
-            session.selectorPosition = .neutral
-            session.lease.state = "stopping"
             try await api.release(leaseID: session.lease.id)
         } catch {
             presentError(error)
@@ -495,7 +499,8 @@ final class AppModel: ObservableObject {
         speed: Int,
         immediate: Bool = false
     ) {
-        guard let session = driving.sessions[locomotiveID] else {
+        guard let session = driving.sessions[locomotiveID],
+              session.lease.state == "active" else {
             return
         }
 
@@ -552,7 +557,8 @@ final class AppModel: ObservableObject {
         locomotiveID: String,
         position: DirectionSelectorPosition
     ) async {
-        guard let session = driving.sessions[locomotiveID] else {
+        guard let session = driving.sessions[locomotiveID],
+              session.lease.state == "active" else {
             return
         }
 
@@ -584,7 +590,8 @@ final class AppModel: ObservableObject {
         functionNumber: Int
     ) async {
         guard let api,
-              let session = driving.sessions[locomotiveID] else {
+              let session = driving.sessions[locomotiveID],
+              session.lease.state == "active" else {
             return
         }
 
@@ -846,7 +853,7 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func handle(_ event: ServerEvent) async {
+    func handle(_ event: ServerEvent) async {
         do {
             switch event.type {
             case "station.status.changed":
@@ -924,7 +931,8 @@ final class AppModel: ObservableObject {
                 )
                 upsertLease(lease)
 
-                if isOwnLease(lease) {
+                if driving.sessions[lease.locomotiveId]?.lease.id == lease.id {
+                    throttleTasks.removeValue(forKey: lease.locomotiveId)?.cancel()
                     stopLeaseHeartbeat(
                         for: lease.locomotiveId
                     )
@@ -938,13 +946,7 @@ final class AppModel: ObservableObject {
                     LeaseExpiredPayload.self
                 )
 
-                if let session = driving.sessions[
-                    payload.locomotiveId
-                ], session.lease.id == payload.leaseId {
-                    session.lease.state = "stopping"
-                    session.requestedSpeed = 0
-                    session.selectorPosition = .neutral
-                }
+                markLeaseStopping(leaseID: payload.leaseId, locomotiveID: payload.locomotiveId)
 
             case "locomotive.created",
                  "locomotive.updated",
@@ -994,7 +996,8 @@ final class AppModel: ObservableObject {
 
     private func sendThrottle(locomotiveID: String) async {
         guard let api,
-              let session = driving.sessions[locomotiveID] else {
+              let session = driving.sessions[locomotiveID],
+              session.lease.state == "active" else {
             return
         }
 
@@ -1053,7 +1056,8 @@ final class AppModel: ObservableObject {
 
     private func renewLease(locomotiveID: String) async {
         guard let api,
-              let session = driving.sessions[locomotiveID] else {
+              let session = driving.sessions[locomotiveID],
+              session.lease.state == "active" else {
             return
         }
 
@@ -1061,10 +1065,11 @@ final class AppModel: ObservableObject {
             let renewed = try await api.heartbeat(
                 leaseID: session.lease.id
             )
-            session.lease = renewed
-            upsertLease(renewed)
+            guard !Task.isCancelled, self.api === api else { return }
+            applyLeaseRenewal(renewed, expectedSession: session)
         } catch {
-            if isExpectedCancellation(error) {
+            if isExpectedCancellation(error) || Task.isCancelled ||
+                driving.sessions[locomotiveID] !== session || session.lease.state != "active" {
                 return
             }
 
@@ -1072,6 +1077,29 @@ final class AppModel: ObservableObject {
                 "Lease \(session.locomotive.name) : " +
                 error.localizedDescription
         }
+    }
+
+    func markLeaseStopping(leaseID: String, locomotiveID: String) {
+        if let index = knownLeases.firstIndex(where: { $0.id == leaseID && $0.state == "active" }) {
+            knownLeases[index].state = "stopping"
+        }
+        guard let session = driving.sessions[locomotiveID], session.lease.id == leaseID else { return }
+        session.lease.state = "stopping"
+        session.requestedSpeed = 0
+        session.selectorPosition = .neutral
+        throttleTasks.removeValue(forKey: locomotiveID)?.cancel()
+        stopLeaseHeartbeat(for: locomotiveID)
+    }
+
+    func applyLeaseRenewal(_ renewed: ControlLease, expectedSession: DrivingSession) {
+        // A response sent before release must never revive a removed/stopping lease,
+        // nor overwrite a new session that acquired the same locomotive in the meantime.
+        guard driving.sessions[renewed.locomotiveId] === expectedSession,
+              expectedSession.lease.id == renewed.id,
+              expectedSession.lease.sessionId == renewed.sessionId,
+              expectedSession.lease.state == "active" else { return }
+        expectedSession.lease = renewed
+        upsertLease(renewed)
     }
 
     private func stopLeaseHeartbeat(for locomotiveID: String) {

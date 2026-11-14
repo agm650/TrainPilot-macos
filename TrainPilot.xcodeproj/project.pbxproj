@@ -82,6 +82,7 @@
 		C7C15831309539E20078ED2F /* LayoutIncompleteArchiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15830309539E20078ED2F /* LayoutIncompleteArchiveTests.swift */; };
 		C7C1583330953A380078ED2F /* LayoutPublicationGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */; };
 		C7C15835309542570078ED2F /* RBusContactAddressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15834309542570078ED2F /* RBusContactAddressTests.swift */; };
+		C7DF96A630A79ACF009A319E /* LeaseLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DF96A530A79ACF009A319E /* LeaseLifecycleTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -174,6 +175,7 @@
 		C7C15834309542570078ED2F /* RBusContactAddressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RBusContactAddressTests.swift; sourceTree = "<group>"; };
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
+		C7DF96A530A79ACF009A319E /* LeaseLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaseLifecycleTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -250,6 +252,7 @@
 				C7C15830309539E20078ED2F /* LayoutIncompleteArchiveTests.swift */,
 				C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */,
 				C7C15834309542570078ED2F /* RBusContactAddressTests.swift */,
+				C7DF96A530A79ACF009A319E /* LeaseLifecycleTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -597,6 +600,7 @@
 				C7C158273093E9910078ED2F /* LayoutTurnoutConfigurationTests.swift in Sources */,
 				C7AFB22830682BAD0016FE77 /* LayoutModelsTests.swift in Sources */,
 				C7AFB23D30682F940016FE77 /* TopologyRenderPlanTests.swift in Sources */,
+				C7DF96A630A79ACF009A319E /* LeaseLifecycleTests.swift in Sources */,
 				00000000000000000000004E /* ThrottleWheelMathTests.swift in Sources */,
 				C7AFB23130682DF50016FE77 /* LayoutEditorDocumentTests.swift in Sources */,
 				C7C158293093EB5D0078ED2F /* TurnoutOperationTests.swift in Sources */,
