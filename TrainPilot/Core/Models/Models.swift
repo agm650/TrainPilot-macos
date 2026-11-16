@@ -117,6 +117,22 @@ struct StationStatus: Codable {
     }
 }
 
+struct LocomotiveFunction: Codable, Hashable {
+    let number: Int
+    var momentary: Bool
+
+    init(number: Int, momentary: Bool = false) {
+        self.number = number
+        self.momentary = momentary
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        number = try container.decode(Int.self, forKey: .number)
+        momentary = try container.decodeIfPresent(Bool.self, forKey: .momentary) ?? false
+    }
+}
+
 struct Locomotive: Codable, Identifiable, Hashable {
     let id: String
     let name: String
@@ -125,6 +141,12 @@ struct Locomotive: Codable, Identifiable, Hashable {
     let speedSteps: Int
     let manufacturer: String?
     let model: String?
+
+    var functions: [LocomotiveFunction]? = nil
+
+    func isMomentary(_ number: Int) -> Bool {
+        functions?.first(where: { $0.number == number })?.momentary ?? false
+    }
 
     var subtitle: String {
         let parts = [manufacturer, model]
@@ -145,13 +167,16 @@ struct LocomotiveInput: Codable, Equatable {
     let manufacturer: String?
     let model: String?
 
+    let functions: [LocomotiveFunction]?
+
     init(
         name: String,
         dccAddress: Int,
         addressKind: String,
         speedSteps: Int,
         manufacturer: String?,
-        model: String?
+        model: String?,
+        functions: [LocomotiveFunction]? = nil
     ) {
         self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         self.dccAddress = dccAddress
@@ -159,6 +184,7 @@ struct LocomotiveInput: Codable, Equatable {
         self.speedSteps = speedSteps
         self.manufacturer = Self.normalizedOptional(manufacturer)
         self.model = Self.normalizedOptional(model)
+        self.functions = functions
     }
 
     init(locomotive: Locomotive) {
@@ -168,7 +194,8 @@ struct LocomotiveInput: Codable, Equatable {
             addressKind: locomotive.addressKind,
             speedSteps: locomotive.speedSteps,
             manufacturer: locomotive.manufacturer,
-            model: locomotive.model
+            model: locomotive.model,
+            functions: locomotive.functions
         )
     }
 
@@ -503,6 +530,7 @@ struct ServerEvent {
 }
 
 enum ServerMessage {
+    case resynchronizing
     case snapshot(SystemSnapshot)
     case event(ServerEvent)
 }

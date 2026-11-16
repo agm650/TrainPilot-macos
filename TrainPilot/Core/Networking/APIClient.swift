@@ -28,7 +28,7 @@ enum APIError: LocalizedError {
 }
 
 actor APIClient: LayoutDataSource {
-    static let clientAPIVersion = "1.4.0"
+    static let clientAPIVersion = "1.14.0"
 
     private var baseURL: URL
     private var tokens: TokenPair?
@@ -168,6 +168,15 @@ actor APIClient: LayoutDataSource {
         )
     }
 
+    func importRollingStock(archive: Data) async throws {
+        _ = try await perform(
+            path: "/api/v1/imports/rolling-stock?mode=merge",
+            method: "POST", bodyData: archive, authorized: true,
+            expected: [204], allowRefresh: true,
+            contentType: "application/vnd.dcc-control.package+zip"
+        )
+    }
+
     func exportRollingStock() async throws -> RollingStockExport {
         let (data, response) = try await performWithResponse(
             path: "/api/v1/exports/rolling-stock",
@@ -183,7 +192,7 @@ actor APIClient: LayoutDataSource {
             from: response.value(
                 forHTTPHeaderField: "Content-Disposition"
             )
-        ) ?? "TrainPilot-rolling-stock.zip"
+        ) ?? "TrainPilot-rolling-stock.dcclib"
 
         return RollingStockExport(
             data: data,

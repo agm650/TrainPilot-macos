@@ -83,6 +83,8 @@
 		C7C1583330953A380078ED2F /* LayoutPublicationGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */; };
 		C7C15835309542570078ED2F /* RBusContactAddressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C15834309542570078ED2F /* RBusContactAddressTests.swift */; };
 		C7DF96A630A79ACF009A319E /* LeaseLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DF96A530A79ACF009A319E /* LeaseLifecycleTests.swift */; };
+		C7DF96A830ABA57F009A319E /* MomentaryFunctionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DF96A730ABA57F009A319E /* MomentaryFunctionController.swift */; };
+		C7DF96AA30ABA663009A319E /* MomentaryFunctionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DF96A930ABA663009A319E /* MomentaryFunctionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -176,6 +178,8 @@
 		C7C50E2D30446EF1007036B2 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		C7C50E2F30446F29007036B2 /* RTK.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTK.md; sourceTree = "<group>"; };
 		C7DF96A530A79ACF009A319E /* LeaseLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaseLifecycleTests.swift; sourceTree = "<group>"; };
+		C7DF96A730ABA57F009A319E /* MomentaryFunctionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentaryFunctionController.swift; sourceTree = "<group>"; };
+		C7DF96A930ABA663009A319E /* MomentaryFunctionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentaryFunctionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -253,6 +257,7 @@
 				C7C1583230953A380078ED2F /* LayoutPublicationGuardTests.swift */,
 				C7C15834309542570078ED2F /* RBusContactAddressTests.swift */,
 				C7DF96A530A79ACF009A319E /* LeaseLifecycleTests.swift */,
+				C7DF96A930ABA663009A319E /* MomentaryFunctionTests.swift */,
 			);
 			path = TrainPilotTests;
 			sourceTree = "<group>";
@@ -366,6 +371,7 @@
 				C7237480304ED0620054808A /* DrivingSession.swift */,
 				C7237481304ED0620054808A /* DrivingSessionManager.swift */,
 				C7237482304ED0620054808A /* KeyboardController.swift */,
+				C7DF96A730ABA57F009A319E /* MomentaryFunctionController.swift */,
 			);
 			path = Driving;
 			sourceTree = "<group>";
@@ -573,6 +579,7 @@
 				C723749F304ED0620054808A /* SequenceTracker.swift in Sources */,
 				C7AFB23330682DFB0016FE77 /* LayoutEditorDocument.swift in Sources */,
 				C7AFB23530682F920016FE77 /* LayoutViewportTransform.swift in Sources */,
+				C7DF96A830ABA57F009A319E /* MomentaryFunctionController.swift in Sources */,
 				C72374A0304ED0620054808A /* PreferencesView.swift in Sources */,
 				C7AFB24F306833060016FE77 /* LayoutArchiveBuilder.swift in Sources */,
 				C7C15817309298B10078ED2F /* LayoutTileEditing.swift in Sources */,
@@ -589,6 +596,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C7DF96AA30ABA663009A319E /* MomentaryFunctionTests.swift in Sources */,
 				C7C1581B309298EF0078ED2F /* LayoutTileEditingTests.swift in Sources */,
 				C7AFB249306831A80016FE77 /* LayoutTurnoutEditingTests.swift in Sources */,
 				C7AFB241306830470016FE77 /* LayoutEditorControllerTests.swift in Sources */,

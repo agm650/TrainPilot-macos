@@ -407,13 +407,9 @@ private struct CabSessionView: View {
 
             FunctionPanel(
                 session: session,
-                functionCount: min(
-                    appModel.systemInfo?
-                        .station.functions ?? 13,
-                    13
-                ),
+                functionCount: appModel.availableFunctionCount,
                 columnCount: 8,
-                disabled: controlsDisabled
+                disabled: !appModel.canOperateFunctions(session)
             ) { function in
                 Task {
                     await appModel.toggleFunction(
@@ -505,12 +501,9 @@ private struct CabSessionView: View {
 
             FunctionPanel(
                 session: session,
-                functionCount: min(
-                    appModel.systemInfo?.station.functions ?? 13,
-                    13
-                ),
+                functionCount: appModel.availableFunctionCount,
                 columnCount: 6,
-                disabled: controlsDisabled
+                disabled: !appModel.canOperateFunctions(session)
             ) { function in
                 Task {
                     await appModel.toggleFunction(

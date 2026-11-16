@@ -8,6 +8,7 @@ struct LibraryView: View {
     @State private var editorPresentation: EditorPresentation?
     @State private var locomotiveToDelete: Locomotive?
     @State private var exporting = false
+    @State private var importing = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -114,6 +115,8 @@ struct LibraryView: View {
             )
 
             if appModel.isAdministrator {
+                Button("Importer…") { importLibrary() }
+                    .disabled(importing || appModel.connectionState != .ready)
                 Button {
                     editorPresentation = EditorPresentation(
                         locomotive: nil
@@ -179,6 +182,28 @@ struct LibraryView: View {
         )
     }
 
+    private func importLibrary() {
+        let panel = NSOpenPanel()
+        panel.title = "Importer une bibliothèque TrainPilot"
+        panel.message = "Fusionner les locomotives et leurs fonctions avec la bibliothèque du serveur."
+        panel.prompt = "Importer"
+        panel.allowedContentTypes = [UTType(filenameExtension: "dcclib") ?? .data, .zip]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        importing = true
+        Task {
+            defer { importing = false }
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let data = try Data(contentsOf: url)
+                await appModel.importRollingStock(data)
+            } catch {
+                appModel.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
     private func exportLibrary() {
         exporting = true
 
@@ -192,7 +217,7 @@ struct LibraryView: View {
             let panel = NSSavePanel()
             panel.title = "Exporter la bibliothèque TrainPilot"
             panel.nameFieldStringValue = archive.suggestedFilename
-            panel.allowedContentTypes = [.zip]
+            panel.allowedContentTypes = [UTType(filenameExtension: "dcclib") ?? .data, .zip]
             panel.canCreateDirectories = true
 
             guard panel.runModal() == .OK,
@@ -337,9 +362,13 @@ private struct LocomotiveEditorSheet: View {
     @State private var addressKind: String
     @State private var speedSteps: Int
     @State private var saving = false
+    @State private var momentaryNumbers: Set<Int>
 
     init(locomotive: Locomotive?) {
         self.locomotive = locomotive
+        _momentaryNumbers = State(initialValue: Set(
+            (locomotive?.functions ?? []).filter(\.momentary).map(\.number)
+        ))
 
         _name = State(initialValue: locomotive?.name ?? "")
         _manufacturer = State(
@@ -405,6 +434,29 @@ private struct LocomotiveEditorSheet: View {
                     }
                     .pickerStyle(.segmented)
                 }
+            }
+
+            if appModel.supportsMomentaryFunctions {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Fonctions momentanées").font(.headline)
+                    Text("Cochez les fonctions actives uniquement pendant l’appui.")
+                        .font(.caption)
+                    ScrollView {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4)) {
+                            ForEach(0..<69, id: \.self) { number in
+                                Toggle("F\(number)", isOn: Binding(
+                                    get: { momentaryNumbers.contains(number) },
+                                    set: { enabled in
+                                        if enabled { momentaryNumbers.insert(number) }
+                                        else { momentaryNumbers.remove(number) }
+                                    }
+                                ))
+                            }
+                        }
+                    }
+                    .frame(height: 140)
+                }
+                .disabled(saving)
             }
 
             if let validationMessage {
@@ -499,7 +551,10 @@ private struct LocomotiveEditorSheet: View {
             addressKind: addressKind,
             speedSteps: speedSteps,
             manufacturer: manufacturer,
-            model: model
+            model: model,
+            functions: appModel.supportsMomentaryFunctions
+                ? momentaryNumbers.sorted().map { LocomotiveFunction(number: $0, momentary: true) }
+                : nil
         )
 
         Task {

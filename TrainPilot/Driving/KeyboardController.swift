@@ -4,6 +4,8 @@ import AppKit
 final class KeyboardController {
     private weak var appModel: AppModel?
     private var monitor: Any?
+    private var heldKeys: [UInt16: UUID] = [:]
+    private var focusTasks: [Task<Void, Never>] = []
 
     init(appModel: AppModel) {
         self.appModel = appModel
@@ -12,13 +14,29 @@ final class KeyboardController {
     func install() {
         guard monitor == nil else { return }
 
-        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        for name in [NSApplication.willResignActiveNotification, NSWindow.didResignKeyNotification] {
+            focusTasks.append(Task { [weak self] in
+                for await _ in NotificationCenter.default.notifications(named: name) {
+                    guard !Task.isCancelled else { return }
+                    self?.releaseHeldFunctions()
+                }
+            })
+        }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .keyUp]) { [weak self] event in
             guard let self else { return event }
             return self.handle(event) ? nil : event
         }
     }
 
+    private func releaseHeldFunctions() {
+        appModel?.momentaryFunctions.releaseAll()
+        heldKeys.removeAll()
+    }
+
     func uninstall() {
+        releaseHeldFunctions()
+        focusTasks.forEach { $0.cancel() }
+        focusTasks.removeAll()
         if let monitor {
             NSEvent.removeMonitor(monitor)
             self.monitor = nil
@@ -26,6 +44,14 @@ final class KeyboardController {
     }
 
     private func handle(_ event: NSEvent) -> Bool {
+        // Releases must work even after selection, modifiers or connection changed.
+        if event.type == .keyUp {
+            if let token = heldKeys.removeValue(forKey: event.keyCode) {
+                appModel?.momentaryFunctions.release(token)
+                return true
+            }
+            return false
+        }
         guard let appModel,
               appModel.connectionState == .ready,
               let session = appModel.driving.activeSession else {
@@ -99,6 +125,13 @@ final class KeyboardController {
 
         default:
             if let function = functionNumber(for: event.keyCode) {
+                guard !event.isARepeat else { return true }
+                if session.locomotive.isMomentary(function) {
+                    heldKeys[event.keyCode] = appModel.pressMomentaryFunction(
+                        locomotiveID: session.locomotive.id, function: function
+                    )
+                    return true
+                }
                 Task {
                     await appModel.toggleFunction(
                         locomotiveID: session.locomotive.id,

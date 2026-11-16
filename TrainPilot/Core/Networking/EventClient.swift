@@ -8,6 +8,7 @@ actor EventClient {
 
     private var tracker = SequenceTracker()
     private var awaitingSnapshot = true
+    private var lastPong = Date()
 
     func connect(baseURL: URL, accessToken: String) throws -> AsyncStream<ServerMessage> {
         disconnectInternal()
@@ -39,6 +40,7 @@ actor EventClient {
         tracker = SequenceTracker()
         awaitingSnapshot = true
 
+        lastPong = Date()
         task.resume()
 
         receiveTask = Task { [weak self] in
@@ -47,9 +49,9 @@ actor EventClient {
 
         heartbeatTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 15_000_000_000)
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
                 guard !Task.isCancelled else { return }
-                await self?.sendHeartbeat()
+                await self?.checkConnection()
             }
         }
 
@@ -94,8 +96,7 @@ actor EventClient {
                 try await process(data)
             }
         } catch {
-            continuation?.finish()
-            continuation = nil
+            disconnectInternal()
         }
     }
 
@@ -126,6 +127,7 @@ actor EventClient {
 
         case .gap:
             awaitingSnapshot = true
+            continuation?.yield(.resynchronizing)
             await requestSnapshot(lastSequence: tracker.lastSequence)
             return
 
@@ -159,6 +161,23 @@ actor EventClient {
         await sendJSONObject(message)
     }
 
+    private func checkConnection() {
+        guard let socket else { return }
+        guard Date().timeIntervalSince(lastPong) < 20 else {
+            disconnectInternal()
+            return
+        }
+        socket.sendPing { [weak self] error in
+            Task { await self?.receivedPong(success: error == nil) }
+        }
+        // Keep the watchdog running even if a socket write is suspended.
+        Task { [weak self] in await self?.sendHeartbeat() }
+    }
+
+    private func receivedPong(success: Bool) {
+        if success { lastPong = Date() } else { disconnectInternal() }
+    }
+
     private func sendHeartbeat() async {
         await sendJSONObject(["type": "client.heartbeat"])
     }
@@ -169,7 +188,11 @@ actor EventClient {
               let string = String(data: data, encoding: .utf8) else {
             return
         }
-        try? await socket.send(.string(string))
+        do {
+            try await socket.send(.string(string))
+        } catch {
+            disconnectInternal()
+        }
     }
 
     private static func parseDate(_ value: String) -> Date? {

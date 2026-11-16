@@ -5,7 +5,7 @@ import Combine
 final class DrivingSession: ObservableObject, Identifiable {
     nonisolated let id: String
 
-    let locomotive: Locomotive
+    @Published var locomotive: Locomotive
 
     @Published var lease: ControlLease
     @Published var requestedSpeed: Int = 0

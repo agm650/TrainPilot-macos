@@ -4,7 +4,12 @@ import Combine
 @MainActor
 final class DrivingSessionManager: ObservableObject {
     @Published private(set) var sessions: [String: DrivingSession] = [:]
-    @Published var activeLocomotiveID: String?
+    @Published var activeLocomotiveID: String? {
+        didSet {
+            if oldValue != activeLocomotiveID { onSelectionChange?() }
+        }
+    }
+    var onSelectionChange: (() -> Void)?
     private var leaseObservations: [String: AnyCancellable] = [:]
 
     var activeSession: DrivingSession? {
@@ -20,6 +25,7 @@ final class DrivingSessionManager: ObservableObject {
 
     func add(locomotive: Locomotive, lease: ControlLease, makeActive: Bool = true) -> DrivingSession {
         if let existing = sessions[locomotive.id] {
+            existing.locomotive = locomotive
             existing.lease = lease
             if makeActive { activeLocomotiveID = locomotive.id }
             return existing

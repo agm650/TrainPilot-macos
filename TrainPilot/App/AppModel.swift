@@ -26,10 +26,30 @@ enum ConnectionState: Equatable {
 
 @MainActor
 final class AppModel: ObservableObject {
-    @Published var connectionState: ConnectionState = .disconnected
+    @Published var connectionState: ConnectionState = .disconnected {
+        didSet {
+            if connectionState != .ready {
+                momentaryFunctions.releaseAll()
+                cancelAllLeaseHeartbeats()
+            }
+        }
+    }
     @Published var systemInfo: SystemInfo?
-    @Published var stationStatus: StationStatus = .unknown
-    @Published var locomotives: [Locomotive] = []
+    @Published var stationStatus: StationStatus = .unknown {
+        didSet {
+            if stationStatus.connectivity != .online || stationStatus.trackPower != .on ||
+                stationStatus.emergencyStop {
+                momentaryFunctions.releaseAll()
+            }
+        }
+    }
+    @Published var locomotives: [Locomotive] = [] {
+        didSet {
+            for locomotive in locomotives {
+                driving.sessions[locomotive.id]?.locomotive = locomotive
+            }
+        }
+    }
     @Published var knownLeases: [ControlLease] = []
     @Published private(set) var blocks: [Block] = []
     @Published private(set) var turnouts: [Turnout] = []
@@ -51,6 +71,8 @@ final class AppModel: ObservableObject {
     private var throttleTasks: [String: Task<Void, Never>] = [:]
     private var leaseHeartbeatTasks: [String: Task<Void, Never>] = [:]
 
+    let momentaryFunctions = MomentaryFunctionController()
+
     private var drivingObservation: AnyCancellable?
     private var currentSessionID: String?
     private var isLoggingOut = false
@@ -62,6 +84,36 @@ final class AppModel: ObservableObject {
     ) {
         self.preferences = preferences
         self.layoutDraftStore = layoutDraftStore
+        momentaryFunctions.canSend = { [weak self] key, enabled in
+            guard let self,
+                  let session = self.driving.sessions[key.locomotiveID],
+                  session.lease.id == key.leaseID,
+                  self.isOwnLease(session.lease),
+                  session.lease.state == "active" else { return false }
+            return !enabled || self.canOperateFunctions(session)
+        }
+        momentaryFunctions.send = { [weak self] key, enabled in
+            guard let api = self?.api else { throw APIError.notAuthenticated }
+            do {
+                try await api.setFunction(
+                    locomotiveID: key.locomotiveID, leaseID: key.leaseID,
+                    functionNumber: key.function, enabled: enabled
+                )
+            } catch {
+                // A late response from an old login must not disconnect the new session.
+                if self?.api === api { throw error }
+            }
+        }
+        momentaryFunctions.onFailure = { [weak self] error in
+            guard let self else { return }
+            self.presentError(error)
+            // Closing the event stream triggers server OFF retries. Do not renew
+            // leases while we cannot confirm that the held function was stopped.
+            self.connectionState = .reconnecting
+            let client = self.eventClient
+            Task { await client?.disconnect() }
+        }
+        driving.onSelectionChange = { [weak self] in self?.momentaryFunctions.releaseAll() }
         // ObservableObject does not automatically observe nested objects on macOS 12.
         drivingObservation = driving.objectWillChange.sink { [weak self] in
             self?.objectWillChange.send()
@@ -150,6 +202,7 @@ final class AppModel: ObservableObject {
 
     func logout() async {
         isLoggingOut = true
+        momentaryFunctions.releaseAll()
         reconnectTask?.cancel()
         eventTask?.cancel()
 
@@ -448,6 +501,16 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func importRollingStock(_ data: Data) async {
+        guard isAdministrator, connectionState == .ready, let api else { return }
+        do {
+            try await api.importRollingStock(archive: data)
+            await refreshLocomotives()
+        } catch {
+            presentError(error)
+        }
+    }
+
     func exportRollingStock() async -> RollingStockExport? {
         guard let api else { return nil }
 
@@ -585,6 +648,34 @@ final class AppModel: ObservableObject {
         }
     }
 
+    var supportsMomentaryFunctions: Bool {
+        guard let version = systemInfo.flatMap({ SemanticVersion($0.apiVersion) }),
+              let minimum = SemanticVersion("1.14.0") else { return false }
+        return version >= minimum
+    }
+
+    var availableFunctionCount: Int {
+        guard let station = systemInfo?.station else { return 13 }
+        return max(0, min(69, station.functions, (station.maxFunctionNumber ?? 68) + 1))
+    }
+
+    func canOperateFunctions(_ session: DrivingSession) -> Bool {
+        connectionState == .ready && !isLoggingOut &&
+        stationStatus.connectivity == .online && stationStatus.trackPower == .on &&
+        !stationStatus.emergencyStop && session.lease.state == "active" &&
+        isOwnLease(session.lease)
+    }
+
+    func pressMomentaryFunction(locomotiveID: String, function: Int) -> UUID? {
+        guard supportsMomentaryFunctions,
+              (0..<availableFunctionCount).contains(function),
+              let session = driving.sessions[locomotiveID],
+              session.locomotive.isMomentary(function) else { return nil }
+        return momentaryFunctions.press(.init(
+            locomotiveID: locomotiveID, leaseID: session.lease.id, function: function
+        ))
+    }
+
     func toggleFunction(
         locomotiveID: String,
         functionNumber: Int
@@ -595,6 +686,9 @@ final class AppModel: ObservableObject {
             return
         }
 
+        guard canOperateFunctions(session),
+              (0..<availableFunctionCount).contains(functionNumber),
+              !session.locomotive.isMomentary(functionNumber) else { return }
         let previous = session.functionStates[functionNumber] ?? false
         let next = !previous
         session.setFunction(functionNumber, enabled: next)
@@ -719,7 +813,6 @@ final class AppModel: ObservableObject {
         )
 
         startConsuming(stream)
-        connectionState = .ready
     }
 
     private func startConsuming(
@@ -744,6 +837,7 @@ final class AppModel: ObservableObject {
     }
 
     private func scheduleReconnect() async {
+        connectionState = .reconnecting
         guard reconnectTask == nil ||
                 reconnectTask?.isCancelled == true else {
             return
@@ -792,7 +886,7 @@ final class AppModel: ObservableObject {
                         accessToken: accessToken
                     )
 
-                    self.connectionState = .ready
+                    self.connectionState = .synchronizing
                     self.reconnectTask = nil
                     self.startConsuming(stream)
                     return
@@ -811,7 +905,10 @@ final class AppModel: ObservableObject {
 
     private func handle(_ message: ServerMessage) async {
         switch message {
+        case .resynchronizing:
+            connectionState = .synchronizing
         case .snapshot(let snapshot):
+            connectionState = .ready
             if let status = snapshot.payload.stationStatus {
                 stationStatus = status
             }
@@ -925,6 +1022,19 @@ final class AppModel: ObservableObject {
                     startLeaseHeartbeat(for: locomotive.id)
                 }
 
+            case "locomotive.control.transferred":
+                let lease = try event.decodePayload(ControlLease.self)
+                upsertLease(lease)
+                momentaryFunctions.releaseAll()
+                if !isOwnLease(lease) {
+                    stopLeaseHeartbeat(for: lease.locomotiveId)
+                    throttleTasks.removeValue(forKey: lease.locomotiveId)?.cancel()
+                    driving.remove(locomotiveID: lease.locomotiveId)
+                } else if let locomotive = locomotives.first(where: { $0.id == lease.locomotiveId }) {
+                    _ = driving.add(locomotive: locomotive, lease: lease, makeActive: false)
+                    startLeaseHeartbeat(for: lease.locomotiveId)
+                }
+
             case "locomotive.control.released":
                 let lease = try event.decodePayload(
                     ControlLease.self
@@ -948,10 +1058,10 @@ final class AppModel: ObservableObject {
 
                 markLeaseStopping(leaseID: payload.leaseId, locomotiveID: payload.locomotiveId)
 
-            case "locomotive.created",
-                 "locomotive.updated",
-                 "locomotive.deleted",
-                 "rolling-stock.imported":
+            case "locomotive.created", "locomotive.updated":
+                upsertLocomotive(try event.decodePayload(Locomotive.self))
+
+            case "locomotive.deleted", "rolling-stock.imported":
                 await refreshLocomotives()
 
             case "layout.imported":
@@ -1055,7 +1165,7 @@ final class AppModel: ObservableObject {
     }
 
     private func renewLease(locomotiveID: String) async {
-        guard let api,
+        guard connectionState == .ready, let api,
               let session = driving.sessions[locomotiveID],
               session.lease.state == "active" else {
             return
@@ -1085,6 +1195,7 @@ final class AppModel: ObservableObject {
         }
         guard let session = driving.sessions[locomotiveID], session.lease.id == leaseID else { return }
         session.lease.state = "stopping"
+        momentaryFunctions.releaseAll()
         session.requestedSpeed = 0
         session.selectorPosition = .neutral
         throttleTasks.removeValue(forKey: locomotiveID)?.cancel()
@@ -1128,6 +1239,15 @@ final class AppModel: ObservableObject {
         from leases: [ControlLease]
     ) {
         guard currentSessionID != nil else { return }
+
+        for session in driving.sortedSessions {
+            if !leases.contains(where: {
+                $0.id == session.lease.id && isOwnLease($0) && $0.state == "active"
+            }) {
+                stopLeaseHeartbeat(for: session.locomotive.id)
+                driving.remove(locomotiveID: session.locomotive.id)
+            }
+        }
 
         for lease in leases
         where isOwnLease(lease) && lease.state == "active" {
