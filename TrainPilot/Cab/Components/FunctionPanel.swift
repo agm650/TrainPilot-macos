@@ -55,6 +55,7 @@ struct FunctionPanel: View {
                                 maxWidth: .infinity,
                                 minHeight: 44
                             )
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .foregroundColor(SNCFPalette.gauge)

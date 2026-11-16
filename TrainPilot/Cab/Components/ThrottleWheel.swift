@@ -8,25 +8,25 @@ struct ThrottleWheelMath {
         startAngle + (Double(min(max(percentage, 0), 100)) / 100.0) * sweepAngle
     }
 
-    static func percentage(for point: CGPoint, in size: CGSize) -> Int {
+    static func percentage(
+        from previousPoint: CGPoint,
+        to point: CGPoint,
+        in size: CGSize,
+        startingAt percentage: Double
+    ) -> Double {
         let center = CGPoint(x: size.width / 2, y: size.height / 2)
-        let dx = point.x - center.x
-        let dy = point.y - center.y
-
-        var degrees = atan2(dy, dx) * 180 / .pi
-        if degrees < 0 { degrees += 360 }
-
-        if degrees <= 40 {
-            degrees += 360
-        } else if degrees < startAngle {
-            let distanceToStart = startAngle - degrees
-            let distanceToEnd = abs(degrees + 360 - (startAngle + sweepAngle))
-            degrees = distanceToStart < distanceToEnd ? startAngle : startAngle + sweepAngle
+        let previous = CGPoint(x: previousPoint.x - center.x, y: previousPoint.y - center.y)
+        let current = CGPoint(x: point.x - center.x, y: point.y - center.y)
+        // Rotation is undefined at the center; ignore these samples.
+        guard hypot(previous.x, previous.y) > 1, hypot(current.x, current.y) > 1 else {
+            return percentage
         }
 
-        let clamped = min(max(degrees, startAngle), startAngle + sweepAngle)
-        let normalized = (clamped - startAngle) / sweepAngle
-        return Int((normalized * 100).rounded())
+        var delta = (atan2(current.y, current.x) - atan2(previous.y, previous.x)) * 180 / .pi
+        // Unwrap the angle so crossing ±180° preserves the direction of movement.
+        if delta > 180 { delta -= 360 }
+        if delta < -180 { delta += 360 }
+        return min(max(percentage + delta / sweepAngle * 100, 0), 100)
     }
 }
 
@@ -36,6 +36,9 @@ struct ThrottleWheel: View {
     let enabled: Bool
     let onChange: (Int) -> Void
     let onCommit: () -> Void
+
+    @State private var previousDragPoint: CGPoint?
+    @State private var dragPercentage: Double?
 
     var body: some View {
         GeometryReader { geometry in
@@ -79,18 +82,30 @@ struct ThrottleWheel: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { gesture in
                         guard enabled else { return }
-                        onChange(
-                            ThrottleWheelMath.percentage(
-                                for: gesture.location,
-                                in: size
-                            )
+                        let percentage = ThrottleWheelMath.percentage(
+                            from: previousDragPoint ?? gesture.startLocation,
+                            to: gesture.location,
+                            in: size,
+                            startingAt: dragPercentage ?? Double(value)
                         )
+                        previousDragPoint = gesture.location
+                        dragPercentage = percentage
+                        let requestedValue = Int(percentage.rounded())
+                        if requestedValue != value {
+                            onChange(requestedValue)
+                        }
                     }
                     .onEnded { _ in
+                        previousDragPoint = nil
+                        dragPercentage = nil
                         guard enabled else { return }
                         onCommit()
                     }
             )
+            .onChange(of: enabled) { _ in
+                previousDragPoint = nil
+                dragPercentage = nil
+            }
             .opacity(enabled ? 1 : 0.62)
         }
         .aspectRatio(1, contentMode: .fit)

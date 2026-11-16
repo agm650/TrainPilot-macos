@@ -74,6 +74,7 @@ struct DirectionSelector: View {
                     width: compact ? 58 : 64,
                     height: compact ? 28 : 32
                 )
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundColor(
